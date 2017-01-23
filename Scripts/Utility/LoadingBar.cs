@@ -19,7 +19,7 @@ public class LoadingBar : MonoBehaviour {
     // Use this for initialization
     void Start () {
         MaxRightBounds = LoadingBarGraphic.offsetMax.x;
-        MinRightBounds = LoadingBarGraphic.offsetMin.x;
+        MinRightBounds = -LoadingBarGraphic.rect.width;
 	}
 	
 	// Update is called once per frame

@@ -10,7 +10,8 @@ public class GameManager : MonoBehaviour {
     public Dictionary<SceneNames, SceneEventHandler> SceneHandlerList;
 
     private bool ReadyForOutsideAccess = false;
-
+    private SceneNames CurrentActiveScene = SceneNames.None;
+    public SceneNames SceneToUseOnStartup = SceneNames.None;
     private string PlayerData = "";
 
     public string SaveFile
@@ -25,11 +26,17 @@ public class GameManager : MonoBehaviour {
         private set { ReadyForOutsideAccess = value; }
     }
 
+    public SceneNames ActiveScene
+    {
+        get { return CurrentActiveScene; }
+        private set { CurrentActiveScene = value; }
+    }
 
     //Enums
     public enum SceneNames
     {
-        TitleScreen = 0,
+        None = 0,
+        TitleScreen,
         MainMenu,
         GameView,
         Intro
@@ -65,6 +72,8 @@ public class GameManager : MonoBehaviour {
         SceneObjectList = new Dictionary<SceneNames, GameObject>();
         SceneHandlerList = new Dictionary<SceneNames, SceneEventHandler>();
         GatherPossibleScenes();
+        DetermineStartingScene();
+        DeactivateNonActiveScenes();
 
         //Everything is loaded, and we are ready for outside access
         Accessible = true;
@@ -77,6 +86,11 @@ public class GameManager : MonoBehaviour {
 
     void GatherPossibleScenes()
     {
+        //Create a null scene for whwen the game starts
+        SceneObjectList.Add(SceneNames.None, new GameObject("Null Scene Object"));
+        SceneHandlerList.Add(SceneNames.None, new NullSceneEventHandler());
+
+        //Begin locating and gathering all of the scenes in the game
         GameObject[] TempSceneArray = GameObject.FindGameObjectsWithTag("Scene");
         foreach(GameObject scene in TempSceneArray)
         {
@@ -106,6 +120,32 @@ public class GameManager : MonoBehaviour {
         }
     }
 
+    public void DetermineStartingScene()
+    {
+        //TODO: Once save files have been implemented, use these to determine what the startup scene should be
+
+#if UNITY_EDITOR
+        //Check if there is no scene to use on startup
+        if(SceneToUseOnStartup == SceneNames.None)
+        {
+            Debug.LogError("Error: no startup scene selected");
+            return;
+        }
+        else
+        {
+            SwitchScene(SceneNames.None, SceneToUseOnStartup);
+            StartScene(SceneHandlerList[SceneToUseOnStartup]);
+        }
+
+        CurrentActiveScene = SceneToUseOnStartup;
+#endif
+    }
+
+    /// <summary>
+    /// Sends a request to the Game Manager, asking to switch from one scene to another.
+    /// </summary>
+    /// <param name="a_Requester"></param>
+    /// <param name="a_Scene"></param>
     public void RequestSceneChange(GameObject a_Requester, SceneNames a_Scene)
     {
         bool ValidRequest = ValidateRequester(a_Requester, RequestType.SceneChange);
@@ -120,6 +160,10 @@ public class GameManager : MonoBehaviour {
         }
     }
 
+    /// <summary>
+    /// Sends a request to the Game Manager, asking to activate a Scene Start event.
+    /// </summary>
+    /// <param name="a_Requester"></param>
     public void RequestSceneStart(GameObject a_Requester)
     {
         bool ValidRequest = ValidateRequester(a_Requester, RequestType.SceneStart);
@@ -179,28 +223,48 @@ public class GameManager : MonoBehaviour {
     /// <returns></returns>
     bool ProcessRequest(GameObject a_Requester, SceneNames a_Scene, RequestType a_Request)
     {
+        bool RequestProcessed = false;
+
         //If we're switching scenes
-        if(a_Request == RequestType.SceneChange)
+        if (a_Request == RequestType.SceneChange)
         {
             if (a_Requester.name == "Title")
             {
-                return SwitchScene(SceneNames.TitleScreen, a_Scene);
+                RequestProcessed = SwitchScene(SceneNames.TitleScreen, a_Scene);
             }
             else if (a_Requester.name == "Intro")
             {
-                return SwitchScene(SceneNames.Intro, a_Scene);
+                RequestProcessed = SwitchScene(SceneNames.Intro, a_Scene);
             }
+
+            //Deactivate any scenes that shouldn't be active right now
+
         }
         //If we're starting a scene
         else if(a_Request == RequestType.SceneStart)
         {
             if (a_Requester.name == "Intro")
             {
-                return StartScene(SceneHandlerList[SceneNames.Intro]);
+                RequestProcessed = StartScene(SceneHandlerList[SceneNames.Intro]);
             }
         }
+        else
+        {
+            Debug.LogError("Error: Unable to fulfill request due to invalid request type.");
+        }
 
-        Debug.LogError("Error: Unable to fulfill request.");
+        return RequestProcessed;
+    }
+
+    bool DeactivateNonActiveScenes()
+    {
+        foreach(KeyValuePair<SceneNames, GameObject> scene in SceneObjectList)
+        {
+            if(scene.Key != CurrentActiveScene)
+            {
+                scene.Value.SetActive(false);
+            }
+        }
         return false;
     }
 
@@ -217,6 +281,10 @@ public class GameManager : MonoBehaviour {
 
         //Turn on the new scene
         TurnOnScene(SceneObjectList[a_SceneToSwitchTo], SceneHandlerList[a_SceneToSwitchTo]);
+
+        //Set the new, active scene
+        CurrentActiveScene = a_SceneToSwitchTo;
+        DeactivateNonActiveScenes();
 
         return true;
     }

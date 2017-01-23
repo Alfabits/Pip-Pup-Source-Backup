@@ -8,10 +8,10 @@ public class DoggoViewEventHandler : SceneEventHandler {
     //Public Variables
     public List<string> DoggoIntroScript;
     public TextRevealLetterByLetterInGame RevealScript;
+    public DoggoViewUIFunctions UI_Functions;
     public TailWag TailWaggerScript;
-    public GameObject SpeechBubble;
-    public GameObject DoggoObject;
-    public GameObject[] UI;
+
+    public bool FirstTimeRevealEvent = true;
 
     public enum Scripts
     {
@@ -28,7 +28,7 @@ public class DoggoViewEventHandler : SceneEventHandler {
         if (GM == null)
             GM = GameManager.Instance;
 
-        SpeechBubble.SetActive(false);
+        UI_Functions.HideTextBox();
     }
 	
 	// Update is called once per frame
@@ -91,7 +91,8 @@ public class DoggoViewEventHandler : SceneEventHandler {
 
     void BeginTextBoxEvent(Scripts a_Script)
     {
-        SpeechBubble.SetActive(true);
+        UI_Functions.RevealTextBox();
+        UI_Functions.HideGameUI();
         ActiveScript = a_Script;
     }
 
@@ -99,52 +100,40 @@ public class DoggoViewEventHandler : SceneEventHandler {
     {
         TextIndex = 0;
         ActiveScript = Scripts.None;
-        SpeechBubble.SetActive(false);
-        RevealGameUI();
+        UI_Functions.HideTextBox();
+        UI_Functions.RevealGameUI();
         Debug.Log("ended");
-    }
-
-    void RevealGameUI()
-    {
-        foreach (GameObject element in UI)
-        {
-            element.SetActive(true);
-        }
-    }
-
-    void HideGameUI()
-    {
-        foreach(GameObject element in UI)
-        {
-            element.SetActive(false);
-        }
     }
 
     void PerformRevealEvent()
     {
+        //TODO: Implement a save file check instead of a bool check
+
         //Check if we already have a save file.
-        if(GM.SaveFile != "")
+        if(!FirstTimeRevealEvent)
         {
             //Perform a return event
+            ReturningIntroEvent();
         }
-        else if(GM.SaveFile == "")
+        else if(FirstTimeRevealEvent)
         {
             //Perform the first-time event
             StartCoroutine(DelayedIntroEvent());
         }
     }
 
-    void RevealDoggo()
+    void ReturningIntroEvent()
     {
         TailWaggerScript.StartWaggingTail();
-        DoggoObject.SetActive(true);
+        UI_Functions.RevealDoggo();
+        UI_Functions.RevealGameUI();
     }
 
     IEnumerator DelayedIntroEvent()
     {
         //Reveal the dog, but hide the UI
-        RevealDoggo();
-        HideGameUI();
+        UI_Functions.RevealDoggo();
+        UI_Functions.HideGameUI();
 
         //Wait
         yield return new WaitForSeconds(3.0f);

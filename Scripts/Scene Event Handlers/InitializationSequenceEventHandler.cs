@@ -21,9 +21,11 @@ public class InitializationSequenceEventHandler : SceneEventHandler {
     {
         if(IsActive)
         {
-            if (RevealScript.CurrentTextStatus == TextRevealLetterByLetter.TextStatus.TextToReveal)
-                GM.RequestSceneStart(this.gameObject);
-            else if (RevealScript.CurrentTextStatus == TextRevealLetterByLetter.TextStatus.TextRevealed && TextFinishedRevealing == false)
+            //if (RevealScript.CurrentTextStatus == TextRevealLetterByLetter.TextStatus.TextToReveal)
+            //{
+            //    GM.RequestSceneStart(this.gameObject);
+            //}
+            if (RevealScript.CurrentTextStatus == TextRevealLetterByLetter.TextStatus.TextRevealed && TextFinishedRevealing == false)
             {
                 TextFinishedRevealing = true;
             }

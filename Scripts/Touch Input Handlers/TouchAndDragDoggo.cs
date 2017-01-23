@@ -10,25 +10,23 @@ public class TouchAndDragDoggo : MonoBehaviour
     public Camera MainCamera;
     List<GameObject> touchList = new List<GameObject>();
     GameObject[] touchesOld;
+
     RaycastHit hit;
-    GraphicRaycaster DoggoGraphicRaycaster;
-    public RectTransform DoggoImage;
+    GameObject hitObject;
+    Vector3 HOStartPosition;
+    Vector3 TouchedPosition;
 
-    public Text TempDebugText;
+    bool StartTouchAndDrag = false;
+    bool DoggoWantsToBeDragged = false;
 
-    int layer;
-    int layermask;
-    public LayerMask DoggoDragMask;
+    LayerMask DoggoDragMask;
 
     Vector2 LastKnownMousePosition;
 
     // Use this for initialization
     void Start()
     {
-        DoggoGraphicRaycaster = GetComponent<GraphicRaycaster>();
-        layer = 3;
-        layermask = 1 << layer;
-        DoggoDragMask = layermask;
+        DoggoDragMask = 1 << 8;
         LastKnownMousePosition = Vector2.zero;
     }
 
@@ -36,43 +34,42 @@ public class TouchAndDragDoggo : MonoBehaviour
     void Update()
     {
         CheckForDoggoTouch();
-        TempDebugText.text = Input.mousePosition.x.ToString() + ", " + Input.mousePosition.y.ToString() + ", " + Input.mousePosition.z.ToString() + ", ";
-    }
-
-    Vector2 GetRelativeMouseMovement()
-    {
-        var CurrentMousePosition = Vector2.zero;
-
-
-
-        return CurrentMousePosition;
     }
 
     void CheckForDoggoTouch()
     {
 
 #if UNITY_EDITOR
-        if (Input.GetMouseButton(0) || Input.GetMouseButtonDown(0) || Input.GetMouseButtonUp(0))
+        if(DoggoWantsToBeDragged)
         {
-            PointerEventData tempPointerEventData = new PointerEventData(null);
-            tempPointerEventData.position = Input.mousePosition;
-            List<RaycastResult> results = new List<RaycastResult>();
-            DoggoGraphicRaycaster.Raycast(tempPointerEventData, results);
-
-            foreach (RaycastResult result in results)
+            if (Input.GetMouseButton(0))
             {
-                if (result.gameObject.layer == DoggoDragMask)
+                if (!StartTouchAndDrag)
                 {
-                    //Get the relative position of the dog to the screen width and height, to offset the canvas zero point.
-                    Vector3 relativePosition = Vector3.zero;
-                    float ScreenWidth = Screen.width;
-                    float ScreenHeight = Screen.height;
+                    //Ray ray = MainCamera.ScreenPointToRay(Input.mousePosition);
+                    //Debug.DrawRay(ray.origin, ray.direction * 10, Color.yellow);
 
-                    //Apply the new position
-                    relativePosition.x = (Input.mousePosition.x - (ScreenWidth / 2));
-                    relativePosition.y = (Input.mousePosition.y - (ScreenHeight / 2));
-                    result.gameObject.transform.localPosition = relativePosition;
+                    //if (Physics.Raycast(ray.origin, ray.direction, out hit, Mathf.Infinity, DoggoDragMask))
+                    //{
+                        //hitObject = hit.collider.gameObject;
+                        HOStartPosition = hitObject.transform.position;
+                        TouchedPosition = MainCamera.ScreenToWorldPoint(Input.mousePosition);
+                        StartTouchAndDrag = true;
+                    //}
                 }
+                else if (StartTouchAndDrag)
+                {
+                    Vector3 CurrentTouchPosition = MainCamera.ScreenToWorldPoint(Input.mousePosition);
+                    Vector3 NewHOPosition = hitObject.transform.position;
+                    NewHOPosition = HOStartPosition + (CurrentTouchPosition - TouchedPosition);
+                    hitObject.transform.position = new Vector3(NewHOPosition.x, NewHOPosition.y, HOStartPosition.z);
+                }
+
+            }
+            else
+            {
+                StartTouchAndDrag = false;
+                hitObject = null;
             }
         }
 #endif
@@ -122,5 +119,22 @@ public class TouchAndDragDoggo : MonoBehaviour
                 }
             }
         }
+    }
+
+    public void StartLiftingDoggo(GameObject a_HitObject)
+    {
+        hitObject = a_HitObject;
+        DoggoWantsToBeDragged = true;
+    }
+
+    public void StopLiftingDoggo()
+    {
+        hitObject = null;
+        DoggoWantsToBeDragged = false;
+    }
+
+    public LayerMask GetDoggoDragMask()
+    {
+        return DoggoDragMask;
     }
 }
