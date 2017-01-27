@@ -6,6 +6,8 @@ using UnityEngine.UI;
 public class TextRevealLetterByLetterInGame : MonoBehaviour
 {
 
+    LoadingManager LM;
+
     public string TextToLoad;
     public Text TextToAssignTo;
 
@@ -19,11 +21,8 @@ public class TextRevealLetterByLetterInGame : MonoBehaviour
     };
 
     public TextStatus CurrentTextStatus;
-    private bool TextRequiresReset = false;
     private bool Blinking = false;
     private bool SkipText = false;
-    private int TextIndex = 0;
-
     string StringToUse;
 
     // Use this for initialization
@@ -32,6 +31,11 @@ public class TextRevealLetterByLetterInGame : MonoBehaviour
 
         CheckTextAssignment();
         CurrentTextStatus = TextStatus.TextToReveal;
+
+        LM = LoadingManager.Instance;
+
+        //Check in with the loading manager
+        LM.CheckIn(this.gameObject, LoadingManager.KeysForScriptsToBeLoaded.TextRevealLettterByLetterInGame, true);
 
     }
 

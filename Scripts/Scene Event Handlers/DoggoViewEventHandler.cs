@@ -5,6 +5,8 @@ using UnityEngine;
 
 public class DoggoViewEventHandler : SceneEventHandler {
 
+    LoadingManager LM;
+
     //Public Variables
     public List<string> DoggoIntroScript;
     public TextRevealLetterByLetterInGame RevealScript;
@@ -29,6 +31,11 @@ public class DoggoViewEventHandler : SceneEventHandler {
             GM = GameManager.Instance;
 
         UI_Functions.HideTextBox();
+
+        LM = LoadingManager.Instance;
+
+        //Check in with the loading manager
+        LM.CheckIn(this.gameObject, LoadingManager.KeysForScriptsToBeLoaded.DoggoViewEventHandler, true);
     }
 	
 	// Update is called once per frame

@@ -4,14 +4,20 @@ using UnityEngine;
 
 public class DoggoViewUIFunctions : MonoBehaviour {
 
+    LoadingManager LM;
+
     public GameObject DoggoObject;
     public GameObject SpeechBubble;
     public GameObject[] UI;
 
     // Use this for initialization
     void Start () {
-		
-	}
+
+        LM = LoadingManager.Instance;
+
+        //Check in with the loading manager
+        LM.CheckIn(this.gameObject, LoadingManager.KeysForScriptsToBeLoaded.DoggoViewUIFunctions, true);
+    }
 	
 	// Update is called once per frame
 	void Update () {

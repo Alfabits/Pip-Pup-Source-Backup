@@ -5,14 +5,17 @@ using UnityEngine;
 [RequireComponent(typeof (TouchAndDragDoggo))]
 public class DoggoTouchEventHandler : MonoBehaviour {
 
+    LoadingManager LM;
+
     Camera MainCamera;
-    GameObject HitObject;
     TouchAndDragDoggo TouchScript;
+    BoopDoggo BoopScript;
+    DoggoViewUIFunctions UI_Functions;
 
     bool Counting = false;
     bool LiftingDoggo = false;
     float CurrentCountedTime = MinimumCountedTime;
-    const float MaximumCountedTime = 5.0f;
+    const float MaximumCountedTime = 8.0f;
     const float MinimumCountedTime = 0.0f;
     const float TimeCountInterval = 0.2f;
 
@@ -23,11 +26,19 @@ public class DoggoTouchEventHandler : MonoBehaviour {
     void Start () {
         MainCamera = GameObject.Find("Main Camera").GetComponent<Camera>();
         TouchScript = this.gameObject.GetComponent<TouchAndDragDoggo>();
-        HitObject = null;
-	}
+        BoopScript = this.gameObject.GetComponent<BoopDoggo>();
+        UI_Functions = GameObject.Find("Doggo Menu").GetComponent<DoggoViewUIFunctions>();
+
+        LM = LoadingManager.Instance;
+
+        //Check in with the loading manager
+        LM.CheckIn(this.gameObject, LoadingManager.KeysForScriptsToBeLoaded.DoggoTouchEventHandler, true);
+    }
 	
 	// Update is called once per frame
 	void Update () {
+
+        //Base check to see if the doggo is being touched
         CheckForTouchUpdates();
 	}
 
@@ -39,11 +50,8 @@ public class DoggoTouchEventHandler : MonoBehaviour {
             Ray ray = MainCamera.ScreenPointToRay(Input.mousePosition);
             Debug.DrawRay(ray.origin, ray.direction * 10, Color.yellow);
 
-            if (Physics.Raycast(ray.origin, ray.direction, out hit, Mathf.Infinity, TouchScript.GetDoggoDragMask()))
+            if (Physics.Raycast(ray.origin, ray.direction, out hit, Mathf.Infinity, TouchScript.GetDoggoDragMask()) && hit.rigidbody)
             {
-                //Create a copy of the object we hit
-                HitObject = hit.collider.gameObject;
-
                 //Start counting
                 Counting = true;
             }
@@ -61,7 +69,8 @@ public class DoggoTouchEventHandler : MonoBehaviour {
             {
                 //If we've reached the target time, stop counting.
                 //Then send a message to TouchAndDragDoggo that the player wants to drag the dog around
-                StartLiftingDoggo(HitObject);
+                StartLiftingDoggo();
+                UI_Functions.HideGameUI();
             }
         }
         if(Input.GetMouseButtonUp(0))
@@ -70,6 +79,7 @@ public class DoggoTouchEventHandler : MonoBehaviour {
             {
                 //Stop the doggo from being lifted
                 StopLiftingDoggo();
+                UI_Functions.RevealGameUI();
 
                 //Reset the counter
                 ResetCounter();
@@ -77,15 +87,19 @@ public class DoggoTouchEventHandler : MonoBehaviour {
             if(!LiftingDoggo)
             {
                 //Boop the doggo, since we didn't finish the countdown.
+                BoopTheDoggo();
+
+                //Reset the counter
+                ResetCounter();
             }
         }
 #endif
     }
 
-    void StartLiftingDoggo(GameObject a_HitObject)
+    void StartLiftingDoggo()
     {
         //Send a message to the touch script, telling it to start lifting the doggo
-        TouchScript.StartLiftingDoggo(a_HitObject);
+        TouchScript.StartLiftingDoggo(hit, true);
 
         //Stop counting and start lifting
         Counting = false;
@@ -99,7 +113,15 @@ public class DoggoTouchEventHandler : MonoBehaviour {
 
         //Set the boolean to false
         LiftingDoggo = false;
-        HitObject = null;
+    }
+
+    void BoopTheDoggo()
+    {
+        //Prepare the boop
+        BoopScript.PrepareBoop(hit.transform, "");
+
+        //Execute the boop
+        BoopScript.CreateBoop();
     }
 
     void IncrementCounter()

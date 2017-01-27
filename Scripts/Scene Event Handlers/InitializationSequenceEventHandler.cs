@@ -4,9 +4,10 @@ using UnityEngine;
 
 public class InitializationSequenceEventHandler : SceneEventHandler {
 
+    LoadingManager LM;
+
     TextRevealLetterByLetter RevealScript;
     bool TextFinishedRevealing = false;
-    
 
     void Start()
     {
@@ -14,6 +15,11 @@ public class InitializationSequenceEventHandler : SceneEventHandler {
         if (GM == null)
             GM = GameManager.Instance;
         IsActive = true;
+
+        LM = LoadingManager.Instance;
+
+        //Check in with the loading manager
+        LM.CheckIn(this.gameObject, LoadingManager.KeysForScriptsToBeLoaded.InitializationSequenceEventHandler, true);
     }
 
     // Update is called once per frame
@@ -52,5 +58,6 @@ public class InitializationSequenceEventHandler : SceneEventHandler {
             RevealScript.StartRevealingText();
         }
         
+
     }
 }

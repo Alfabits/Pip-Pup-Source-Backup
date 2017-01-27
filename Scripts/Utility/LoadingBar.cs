@@ -5,6 +5,8 @@ using UnityEngine.UI;
 
 public class LoadingBar : MonoBehaviour {
 
+    LoadingManager LM;
+
     public float MinRightBounds = 595;
     public float MaxRightBounds = 0;
 
@@ -20,7 +22,12 @@ public class LoadingBar : MonoBehaviour {
     void Start () {
         MaxRightBounds = LoadingBarGraphic.offsetMax.x;
         MinRightBounds = -LoadingBarGraphic.rect.width;
-	}
+
+        LM = LoadingManager.Instance;
+
+        //Check in with the loading manager
+        LM.CheckIn(this.gameObject, LoadingManager.KeysForScriptsToBeLoaded.LoadingBar, true);
+    }
 	
 	// Update is called once per frame
 	void Update () {

@@ -6,28 +6,30 @@ using UnityEngine.UI;
 
 public class TouchAndDragDoggo : MonoBehaviour
 {
+    LoadingManager LM;
 
     public Camera MainCamera;
-    List<GameObject> touchList = new List<GameObject>();
-    GameObject[] touchesOld;
+    public FloatingTextGenerator TextGenerator;
 
+    Ray ray;
     RaycastHit hit;
     GameObject hitObject;
-    Vector3 HOStartPosition;
-    Vector3 TouchedPosition;
 
     bool StartTouchAndDrag = false;
     bool DoggoWantsToBeDragged = false;
+    float HitLength;
 
     LayerMask DoggoDragMask;
-
-    Vector2 LastKnownMousePosition;
 
     // Use this for initialization
     void Start()
     {
         DoggoDragMask = 1 << 8;
-        LastKnownMousePosition = Vector2.zero;
+
+        LM = LoadingManager.Instance;
+
+        //Check in with the loading manager
+        LM.CheckIn(this.gameObject, LoadingManager.KeysForScriptsToBeLoaded.TouchAndDragDoggo, true);
     }
 
     // Update is called once per frame
@@ -40,90 +42,54 @@ public class TouchAndDragDoggo : MonoBehaviour
     {
 
 #if UNITY_EDITOR
-        if(DoggoWantsToBeDragged)
+        if (DoggoWantsToBeDragged)
         {
             if (Input.GetMouseButton(0))
             {
-                if (!StartTouchAndDrag)
-                {
-                    //Ray ray = MainCamera.ScreenPointToRay(Input.mousePosition);
-                    //Debug.DrawRay(ray.origin, ray.direction * 10, Color.yellow);
+                //Update the raycast position
+                ray = MainCamera.ScreenPointToRay(Input.mousePosition);
+                Debug.DrawRay(ray.origin, ray.direction * 10, Color.yellow);
 
-                    //if (Physics.Raycast(ray.origin, ray.direction, out hit, Mathf.Infinity, DoggoDragMask))
-                    //{
-                        //hitObject = hit.collider.gameObject;
-                        HOStartPosition = hitObject.transform.position;
-                        TouchedPosition = MainCamera.ScreenToWorldPoint(Input.mousePosition);
-                        StartTouchAndDrag = true;
-                    //}
-                }
-                else if (StartTouchAndDrag)
+                //Check if the text generator can spawn a new piece of text
+                if (TextGenerator.TimerComplete)
                 {
-                    Vector3 CurrentTouchPosition = MainCamera.ScreenToWorldPoint(Input.mousePosition);
-                    Vector3 NewHOPosition = hitObject.transform.position;
-                    NewHOPosition = HOStartPosition + (CurrentTouchPosition - TouchedPosition);
-                    hitObject.transform.position = new Vector3(NewHOPosition.x, NewHOPosition.y, HOStartPosition.z);
+                    TextGenerator.GenerateFloatingText("", FloatingTextGenerator.FloatingTextUse.TouchAndDragDoggo, hitObject.transform);
+                    TextGenerator.ResetTimer();
                 }
 
+                //Calculate the new position/velocity of the floating doggo
+                Vector3 velocity = (ray.GetPoint(HitLength) - hitObject.transform.position) * 4.0f;
+                if (velocity.magnitude > 10.0f)
+                {
+                    velocity *= 10.0f / velocity.magnitude;
+                }
+                hitObject.GetComponent<Rigidbody>().velocity = velocity;
             }
-            else
-            {
-                StartTouchAndDrag = false;
-                hitObject = null;
-            }
+        }
+        else
+        {
+            ResetDraggingParameters();
         }
 #endif
-
-        if (Input.touchCount > 0)
-        {
-            touchesOld = new GameObject[touchList.Count];
-            touchList.CopyTo(touchesOld);
-            touchList.Clear();
-
-            foreach (Touch touch in Input.touches)
-            {
-                Ray ray = MainCamera.ScreenPointToRay(touch.position);
-
-                if (Physics.Raycast(ray, out hit, DoggoDragMask))
-                {
-                    GameObject recipient = hit.transform.gameObject;
-                    touchList.Add(recipient);
-
-                    if (touch.phase == TouchPhase.Began)
-                    {
-                        recipient.SendMessage("OnTouchDown", hit.point, SendMessageOptions.DontRequireReceiver);
-                    }
-
-                    if (touch.phase == TouchPhase.Ended)
-                    {
-                        recipient.SendMessage("OnTouchUp", hit.point, SendMessageOptions.DontRequireReceiver);
-                    }
-
-                    if (touch.phase == TouchPhase.Stationary || touch.phase == TouchPhase.Moved)
-                    {
-                        recipient.SendMessage("OnTouchStay", hit.point, SendMessageOptions.DontRequireReceiver);
-                    }
-
-                    if (touch.phase == TouchPhase.Canceled)
-                    {
-                        recipient.SendMessage("OnTouchExit", hit.point, SendMessageOptions.DontRequireReceiver);
-                    }
-                }
-            }
-
-            foreach (GameObject g in touchesOld)
-            {
-                if (!touchList.Contains(g))
-                {
-                    g.SendMessage("OnTouchExit", hit.point, SendMessageOptions.DontRequireReceiver);
-                }
-            }
-        }
     }
 
-    public void StartLiftingDoggo(GameObject a_HitObject)
+    void ResetDraggingParameters()
     {
-        hitObject = a_HitObject;
+        StartTouchAndDrag = false;
+        hitObject = null;
+        TextGenerator.ResetTimer();
+    }
+
+    public void StartLiftingDoggo(RaycastHit a_Hit, bool a_UseTimer)
+    {
+        hitObject = a_Hit.collider.gameObject;
+        HitLength = a_Hit.distance;
+
+        if (a_UseTimer)
+        {
+            TextGenerator.UseTimer();
+        }
+
         DoggoWantsToBeDragged = true;
     }
 
@@ -137,4 +103,9 @@ public class TouchAndDragDoggo : MonoBehaviour
     {
         return DoggoDragMask;
     }
+
+    //Vector3 CurrentTouchPosition = MainCamera.ScreenToWorldPoint(Input.mousePosition);
+    //Vector3 NewHOPosition = hitObject.transform.position;
+    //NewHOPosition = HOStartPosition + (CurrentTouchPosition - TouchedPosition);
+    //hitObject.transform.position = new Vector3(NewHOPosition.x, NewHOPosition.y, HOStartPosition.z);
 }
