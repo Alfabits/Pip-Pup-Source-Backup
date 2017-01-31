@@ -15,7 +15,6 @@ public class TouchAndDragDoggo : MonoBehaviour
     RaycastHit hit;
     GameObject hitObject;
 
-    bool StartTouchAndDrag = false;
     bool DoggoWantsToBeDragged = false;
     float HitLength;
 
@@ -75,7 +74,6 @@ public class TouchAndDragDoggo : MonoBehaviour
 
     void ResetDraggingParameters()
     {
-        StartTouchAndDrag = false;
         hitObject = null;
         TextGenerator.ResetTimer();
     }

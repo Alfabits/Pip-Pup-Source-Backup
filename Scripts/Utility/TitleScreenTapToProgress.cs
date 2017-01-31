@@ -16,12 +16,12 @@ public class TitleScreenTapToProgress : MonoBehaviour {
         for (int i = 0; i < Input.touchCount; ++i)
         {
             if (Input.GetTouch(i).phase == TouchPhase.Began)
-                GM.RequestSceneChange(this.gameObject, GameManager.SceneNames.TitleScreen);
+                GM.RequestSceneChange(this.gameObject, SceneManager.SceneNames.TitleScreen);
         }
 
         if(Input.GetMouseButtonDown(0))
         {
-            GM.RequestSceneChange(this.gameObject, GameManager.SceneNames.TitleScreen);
+            GM.RequestSceneChange(this.gameObject, SceneManager.SceneNames.TitleScreen);
         }
     }
 }

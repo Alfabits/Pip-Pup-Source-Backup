@@ -96,7 +96,7 @@ public class LoadingManager : MonoBehaviour {
     public void CheckIn(GameObject a_GameObj, KeysForScriptsToBeLoaded a_Key, bool a_Loaded)
     {
         //Check if the one checking in is a valid requester
-        Debug.Log(a_GameObj.name + " checking in with a status of " + a_Loaded + "!");
+        //Debug.Log(a_GameObj.name + " checking in with a status of " + a_Loaded + "!");
         GlobalLoadingStatusDictionary[a_Key] = a_Loaded;
 
         //Do a rollcall, to see if everyone is present;
@@ -115,11 +115,11 @@ public class LoadingManager : MonoBehaviour {
             }
             if(GlobalLoadingStatusDictionary[(KeysForScriptsToBeLoaded)i] == true)
             {
-                Debug.Log(i + ": " + (KeysForScriptsToBeLoaded)i);
+                //Debug.Log(i + ": " + (KeysForScriptsToBeLoaded)i);
             }
         }
 
-        Debug.Log("Ending with an overall status of " + IsEveryonePresent + ".");
+        //Debug.Log("Ending with an overall status of " + IsEveryonePresent + ".");
         RollCallComplete = IsEveryonePresent;
     }
 }

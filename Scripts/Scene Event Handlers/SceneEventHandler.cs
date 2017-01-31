@@ -23,5 +23,6 @@ public abstract class SceneEventHandler : MonoBehaviour {
 		
 	}
 
-    public abstract void OnSceneEvent(GameManager.SceneEventType a_Event);
+    public abstract void OnSceneEvent(SceneManager.SceneEventType a_Event);
+    public abstract void RequestEventStart(GameEvent a_Event);
 }

@@ -40,19 +40,19 @@ public class InitializationSequenceEventHandler : SceneEventHandler {
             {
                 if (Input.GetKeyDown(KeyCode.Space))
                 {
-                    GM.RequestSceneChange(this.gameObject, GameManager.SceneNames.GameView);
+                    GM.RequestSceneChange(this.gameObject, SceneManager.SceneNames.GameView);
                 }
             }
         }
     }
 
-    public override void OnSceneEvent(GameManager.SceneEventType a_Event)
+    public override void OnSceneEvent(SceneManager.SceneEventType a_Event)
     {
-        if (a_Event == GameManager.SceneEventType.SceneHidden)
+        if (a_Event == SceneManager.SceneEventType.SceneHidden)
         {
             IsActive = false;
         }
-        if (a_Event == GameManager.SceneEventType.SceneStarted)
+        if (a_Event == SceneManager.SceneEventType.SceneStarted)
         {
             IsActive = true;
             RevealScript.StartRevealingText();

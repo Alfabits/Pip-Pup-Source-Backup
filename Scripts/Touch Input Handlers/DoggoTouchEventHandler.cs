@@ -14,6 +14,7 @@ public class DoggoTouchEventHandler : MonoBehaviour {
 
     bool Counting = false;
     bool LiftingDoggo = false;
+    bool WasLiftingDoggo = false;
     float CurrentCountedTime = MinimumCountedTime;
     const float MaximumCountedTime = 8.0f;
     const float MinimumCountedTime = 0.0f;
@@ -86,11 +87,17 @@ public class DoggoTouchEventHandler : MonoBehaviour {
             }
             if(!LiftingDoggo)
             {
-                //Boop the doggo, since we didn't finish the countdown.
-                BoopTheDoggo();
+                if(hit.rigidbody != null && !WasLiftingDoggo)
+                {
+                    //Boop the doggo, since we didn't finish the countdown.
+                    BoopTheDoggo();
+                }
 
                 //Reset the counter
                 ResetCounter();
+
+                //Tell the script that we are no longer reseting the parameters
+                WasLiftingDoggo = false;
             }
         }
 #endif
@@ -113,6 +120,7 @@ public class DoggoTouchEventHandler : MonoBehaviour {
 
         //Set the boolean to false
         LiftingDoggo = false;
+        WasLiftingDoggo = true;
     }
 
     void BoopTheDoggo()
