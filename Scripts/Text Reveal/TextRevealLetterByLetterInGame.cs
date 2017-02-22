@@ -17,13 +17,17 @@ public class TextRevealLetterByLetterInGame : MonoBehaviour
     {
         TextToReveal = 0,
         TextRevealing,
-        TextRevealed
+        TextRevealed,
+        TextAllRevealed
     };
 
     public TextStatus CurrentTextStatus;
+    private List<string> ActiveScriptContent;
     private bool Blinking = false;
     private bool SkipText = false;
-    string StringToUse;
+    private bool CanSkip = false;
+    private int TextIndex = 0;
+    private string StringToUse;
 
     // Use this for initialization
     void Start()
@@ -49,38 +53,98 @@ public class TextRevealLetterByLetterInGame : MonoBehaviour
             Blinking = true;
         }
 
-        if (Input.GetKeyDown(KeyCode.Space) &&
-        CurrentTextStatus == TextStatus.TextRevealing &&
-        SkipText == false)
+        if (CurrentTextStatus == TextStatus.TextRevealed)
         {
-            //set skip text to true
-            SkipText = true;
+            CheckForProgressToNextScriptContent();
         }
-        else if (Input.GetKeyUp(KeyCode.Space) &&
-        CurrentTextStatus == TextStatus.TextRevealing &&
-        SkipText == true)
+
+        //Check if we can skip yet. We make it so the player can't just hold down the button after pressing 
+        //space to progress to the next piece of content, as that feels sludgy and inprecise.
+        if (CanSkip)
         {
-            //set skip text to false
-            SkipText = false;
+            if (Input.GetKeyDown(KeyCode.Space) &&
+            CurrentTextStatus == TextStatus.TextRevealing &&
+            SkipText == false)
+            {
+                //set skip text to true
+                SkipText = true;
+            }
+            else if (Input.GetKeyUp(KeyCode.Space) &&
+            CurrentTextStatus == TextStatus.TextRevealing &&
+            SkipText == true)
+            {
+                //set skip text to false
+                SkipText = false;
+            }
+            else if (CurrentTextStatus == TextStatus.TextRevealed)
+            {
+                SkipText = false;
+                CanSkip = false;
+            }
         }
-        else if (CurrentTextStatus == TextStatus.TextRevealed)
+        else
         {
-            SkipText = false;
+            if (CurrentTextStatus == TextStatus.TextRevealing &&
+            Input.GetKeyUp(KeyCode.Space))
+            {
+                CanSkip = true;
+            }
         }
+
     }
 
-    void ResetTextAssignment()
+    void CheckForProgressToNextScriptContent()
     {
+        //Check the script that should be used
+        List<string> ActiveList = new List<string>();
+        int ActiveListCount = 0;
 
+        ActiveList = ActiveScriptContent;
+        ActiveListCount = ActiveList.Count;
+
+        if (Input.GetKeyDown(KeyCode.Space) &&
+        CurrentTextStatus == TextStatus.TextRevealed &&
+        TextIndex >= 0 &&
+        TextIndex < ActiveListCount)
+        {
+            TextIndex += 1;
+
+            if (TextIndex > ActiveListCount - 1)
+            {
+                CurrentTextStatus = TextStatus.TextAllRevealed;
+            }
+            else
+            {
+                RevealNextLine(ActiveList[TextIndex]);
+                CurrentTextStatus = TextStatus.TextRevealing;
+            }
+        }
     }
 
-    public void StartRevealingText(string a_UseThis)
+    public void StartRevealingText(List<string> a_ScriptContent)
     {
         if (CurrentTextStatus != TextStatus.TextRevealing)
         {
-            StartCoroutine(AssignText(a_UseThis));
+            ActiveScriptContent = a_ScriptContent;
+            RevealNextLine(a_ScriptContent[0]);
+        }
+    }
+
+    public void CleanUpTextEvent()
+    {
+        if (CurrentTextStatus == TextStatus.TextAllRevealed)
+        {
+            ActiveScriptContent = null;
+        }
+    }
+
+    void RevealNextLine(string a_UseThis)
+    {
+        if (CurrentTextStatus != TextStatus.TextRevealing)
+        {
             CurrentTextStatus = TextStatus.TextRevealing;
-        }       
+            StartCoroutine(AssignText(a_UseThis));
+        }
     }
 
     void CheckTextAssignment()
@@ -175,7 +239,6 @@ public class TextRevealLetterByLetterInGame : MonoBehaviour
 
         yield return null;
     }
-
     IEnumerator BlinkLetter()
     {
         char blinkChar = '_';

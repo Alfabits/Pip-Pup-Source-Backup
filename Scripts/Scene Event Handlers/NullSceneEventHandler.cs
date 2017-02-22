@@ -3,9 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class NullSceneEventHandler : SceneEventHandler {
+public class NullSceneEventHandler : SceneEventHandler, INullSceneEventHandler
+{
 
     public override void OnSceneEvent(SceneManager.SceneEventType a_Event)
+    {
+        
+    }
+
+    public override void RequestEventStart(GameEvent a_Event)
     {
         
     }

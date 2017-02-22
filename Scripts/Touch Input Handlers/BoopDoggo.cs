@@ -16,10 +16,15 @@ public class BoopDoggo : MonoBehaviour {
 
         //Check in with the loading manager
         LM.CheckIn(this.gameObject, LoadingManager.KeysForScriptsToBeLoaded.BoopDoggo, true);
+
+#if UNITY_EDITOR
+        //Report the time when the event manager finished
+        Debug.Log(this.GetType().ToString() + " has finished loading at: <" + Time.unscaledTime + ">.");
+#endif
     }
-	
-	// Update is called once per frame
-	void Update () {
+
+    // Update is called once per frame
+    void Update () {
 		
 	}
 

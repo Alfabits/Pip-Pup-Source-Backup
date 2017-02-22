@@ -2,27 +2,19 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class DoggoViewEventHandler : SceneEventHandler
 {
     //Public Variables
-    public TextRevealLetterByLetterInGame TextRevealerScript;
-    public DoggoViewUIFunctions UI_Functions;
-    public TailWag TailWaggerScript;
-
-    public enum Scripts
-    {
-        None = -1,
-        DoggoIntroScript
-    };
-
-    //Private Variables
-    private LoadingManager LM;
-    private Dictionary<string, GameEvent> EventList;
-    private List<string> ActiveScriptContent;
-    private Scripts ActiveScript;
-    private GameEvent ActiveEvent;
-    private int TextIndex = 0;
+    [SerializeField]
+    private TextRevealLetterByLetterInGame TextRevealerScript;
+    [SerializeField]
+    private DoggoViewUIFunctions UI_Functions;
+    [SerializeField]
+    private TouchAndDragDoggo DoggoTouchDragScript;
+    [SerializeField]
+    private TailWag TailWaggerScript;
 
     // Use this for initialization
     void Start()
@@ -31,17 +23,27 @@ public class DoggoViewEventHandler : SceneEventHandler
             GM = GameManager.Instance;
         LM = LoadingManager.Instance;
 
-        PrepareDefaultGameView();
+        StartingGameEvent = new IntroEvent();
+        ActiveScriptContent = new List<string>();
+
+        UI_Functions.PrepareDefaultGameView();
 
         //Check in with the loading manager
         LM.CheckIn(this.gameObject, LoadingManager.KeysForScriptsToBeLoaded.DoggoViewEventHandler, true);
+
+#if UNITY_EDITOR
+        //Report the time when the event manager finished
+        Debug.Log(this.GetType().ToString() + " has finished loading at: <" + Time.unscaledTime + ">.");
+#endif
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (TextRevealerScript.CurrentTextStatus == TextRevealLetterByLetterInGame.TextStatus.TextRevealed)
-            CheckIfIntroScriptProgress();
+        if(TextRevealerScript.CurrentTextStatus == TextRevealLetterByLetterInGame.TextStatus.TextAllRevealed)
+        {
+            EndTextBoxEvent();
+        }
     }
 
     //A gateway for performing certain actions when certain events are triggered.
@@ -49,75 +51,69 @@ public class DoggoViewEventHandler : SceneEventHandler
     {
         if (a_Event == SceneManager.SceneEventType.SceneHidden)
         {
-            IsActive = false;
+            SceneIsCurrentlyActive = false;
         }
         if (a_Event == SceneManager.SceneEventType.SceneRevealed || a_Event == SceneManager.SceneEventType.SceneStarted)
         {
-            IsActive = true;
-            PerformRevealEvent();
+            SceneIsCurrentlyActive = true;
+
+            if (!Returned)
+                RequestEventStart(StartingGameEvent);
         }
     }
 
-    void CheckIfIntroScriptProgress()
+    /// <summary>
+    /// Starts a text box event, assuming a valid script has been loaded. Delay defaults to 0, and will only be used if the bool is true.
+    /// </summary>
+    /// <param name="a_UseDelay"></param>
+    /// <param name="a_Delay"></param>
+    void BeginTextBoxEvent(GameEvent a_Event)
     {
-        //Check the script that should be used
-        List<string> ActiveList = new List<string>();
-        int ActiveListCount = 0;
-
-        switch (ActiveScript)
-        {
-            case Scripts.DoggoIntroScript:
-                ActiveList = ActiveScriptContent;
-                ActiveListCount = ActiveList.Count;
-                break;
-        }
-
-        if (IsActive)
-        {
-            if (Input.GetKeyDown(KeyCode.Space) &&
-            TextRevealerScript.CurrentTextStatus == TextRevealLetterByLetterInGame.TextStatus.TextRevealed &&
-            TextIndex >= 0 &&
-            TextIndex < ActiveListCount)
-            {
-                TextIndex += 1;
-
-                if (TextIndex > ActiveListCount - 1)
-                {
-                    Debug.Log("ending");
-                    EndTextBoxEvent();
-                }
-                else
-                {
-                    TextRevealerScript.StartRevealingText(ActiveList[TextIndex]);
-                    TextRevealerScript.CurrentTextStatus = TextRevealLetterByLetterInGame.TextStatus.TextRevealing;
-                }
-            }
-        }
-
-    }
-
-    void BeginTextBoxEvent(Scripts a_Script)
-    {
-        UI_Functions.RevealTextBox();
+        //Hide the game UI, and make it so doggo cannot be interacted with
         UI_Functions.HideGameUI();
-        ActiveScript = a_Script;
+        DoggoTouchDragScript.SetDraggable(false);
+
+        if (a_Event.CheckIfEventUsesDelay())
+        {
+            //Start the text event after a short delay
+            StartCoroutine(StartDelayedTextEvent(a_Event.GetDelayAmount()));
+        }
+        else
+        {
+            //Just start the event, no delay
+            StartInstantTextEvent();
+        }
     }
 
     void EndTextBoxEvent()
     {
         //Reset the text index and active script container
         TextIndex = 0;
-        ActiveScript = Scripts.None;
 
-        //Change to the regular game UI
+        //Change to the regular game UI and make it so doggo can be interacted with
+        string[] buttonsToReveal = new string[1];
+        string[] buttonsToHide = new string[3];
+        buttonsToReveal[0] = "Talk Button";
+        buttonsToHide[0] = "Love Button";
+        buttonsToHide[1] = "Food Button";
+        buttonsToHide[2] = "Play Button";
+        SwitchSpecificUIButtons(buttonsToReveal, buttonsToHide);
+
         UI_Functions.HideTextBox();
-        UI_Functions.RevealGameUI();
+        TextRevealerScript.CleanUpTextEvent();
+        DoggoTouchDragScript.SetDraggable(true);
 
         //Save the game
         GM.SaveAndLoader.SaveAllGameData();
     }
 
-    void PerformRevealEvent()
+    void SwitchSpecificUIButtons(string[] a_ButtonsToReveal, string[] a_ButtonsToHide)
+    {
+        UI_Functions.RevealSpecificGameUI(a_ButtonsToReveal);
+        UI_Functions.HideSpecificGameUI(a_ButtonsToHide);
+    }
+
+    void PerformRevealEvent(GameEvent a_Event)
     {
         //Check to see if we already have a save file
         bool SaveFileExists = GM.SaveAndLoader.CheckForSaveFile();
@@ -130,8 +126,10 @@ public class DoggoViewEventHandler : SceneEventHandler
         else if (!SaveFileExists)
         {
             //Perform the first-time event
-            StartCoroutine(DelayedIntroEvent());
+            BeginTextBoxEvent(a_Event);
         }
+
+        Returned = true;
     }
 
     void ReturningIntroEvent()
@@ -141,31 +139,61 @@ public class DoggoViewEventHandler : SceneEventHandler
         UI_Functions.RevealGameUI();
     }
 
-    IEnumerator DelayedIntroEvent()
+    IEnumerator StartDelayedTextEvent(float a_Delay)
     {
-        //Reveal the dog, but hide the UI
-        UI_Functions.RevealDoggo();
-        UI_Functions.HideGameUI();
-
         //Wait
-        yield return new WaitForSeconds(3.0f);
+        yield return new WaitForSeconds(a_Delay);
 
-        //Begin the intro event
-        BeginTextBoxEvent(Scripts.DoggoIntroScript);
-        TextRevealerScript.StartRevealingText(ActiveScriptContent[TextIndex]);
+        //Show the game ui
+        UI_Functions.PrepareTextEventGameView();
+
+        //Begin showing the script
+        TextRevealerScript.StartRevealingText(ActiveScriptContent);
+
         yield return null;
     }
 
-    void PrepareDefaultGameView()
+    void StartInstantTextEvent()
     {
-        EventList = new Dictionary<string, GameEvent>();
-        EventList.Add("Intro", new IntroEvent());
+        //Show the game UI
+        UI_Functions.PrepareTextEventGameView();
 
-        UI_Functions.HideTextBox();
+        //Begin showing the script
+        TextRevealerScript.StartRevealingText(ActiveScriptContent);
     }
 
     public override void RequestEventStart(GameEvent a_Event)
     {
-        ActiveScriptContent = a_Event.GetTextEventScript();
+        if (a_Event.CheckIfUnlocked())
+        {
+            ActiveScriptContent = a_Event.GetTextEventScript();
+
+            if (a_Event.GetEventName() == "Intro Event")
+            {
+                PerformRevealEvent(a_Event);
+            }
+            else
+            {
+                BeginTextBoxEvent(a_Event);
+            }
+        }
     }
+
+    public void RequestSceneChange(Button a_Button)
+    {
+        switch(a_Button.name)
+        {
+            case "Talk Button":
+                GM.RequestSceneChange(this.gameObject, SceneManager.SceneNames.GameView, SceneManager.SceneNames.TextMenu);
+                break;
+        }
+    }
+
+    #region PRIVATE VARIABLES
+    private LoadingManager LM;
+    private GameEvent StartingGameEvent;
+    private List<string> ActiveScriptContent;
+    private int TextIndex = 0;
+    private bool Returned = false;
+    #endregion
 }

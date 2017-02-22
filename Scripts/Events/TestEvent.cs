@@ -3,16 +3,16 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-class IntroEvent : GameEvent
-{
-    public IntroEvent()
+public class TestEvent : GameEvent {
+
+    public TestEvent()
     {
         unlocked = true;
-        autostart = true;
+        autostart = false;
         usedelay = true;
         onetimerun = true;
         delay = 3.0f;
-        eventname = "Intro Event";
+        eventname = "Test Event";
         EventsToBeUnlockedAfterCompletion = new GameEvent[1];
         TextEventScript = new List<string>();
         SetPriorityNumber();
@@ -21,7 +21,7 @@ class IntroEvent : GameEvent
 
     public override void StartEvent()
     {
-        
+
     }
 
     public override List<string> GetTextEventScript()
@@ -31,7 +31,7 @@ class IntroEvent : GameEvent
 
     protected override void SetPriorityNumber()
     {
-        priorityNumber = 0;
+        priorityNumber = 10000;
     }
 
     protected override void CreateTextEventScript()

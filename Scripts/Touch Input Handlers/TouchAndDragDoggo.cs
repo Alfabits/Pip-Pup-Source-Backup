@@ -16,6 +16,7 @@ public class TouchAndDragDoggo : MonoBehaviour
     GameObject hitObject;
 
     bool DoggoWantsToBeDragged = false;
+    bool DoggoCanBeDragged = false;
     float HitLength;
 
     LayerMask DoggoDragMask;
@@ -100,6 +101,16 @@ public class TouchAndDragDoggo : MonoBehaviour
     public LayerMask GetDoggoDragMask()
     {
         return DoggoDragMask;
+    }
+
+    public void SetDraggable(bool a_Value)
+    {
+        DoggoCanBeDragged = a_Value;
+    }
+
+    public bool GetDraggable()
+    {
+        return DoggoCanBeDragged;
     }
 
     //Vector3 CurrentTouchPosition = MainCamera.ScreenToWorldPoint(Input.mousePosition);

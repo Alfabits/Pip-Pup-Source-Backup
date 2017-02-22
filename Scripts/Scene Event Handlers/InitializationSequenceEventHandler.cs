@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -14,7 +15,7 @@ public class InitializationSequenceEventHandler : SceneEventHandler {
         RevealScript = this.gameObject.GetComponent<TextRevealLetterByLetter>();
         if (GM == null)
             GM = GameManager.Instance;
-        IsActive = true;
+        SceneIsCurrentlyActive = true;
 
         LM = LoadingManager.Instance;
 
@@ -25,7 +26,7 @@ public class InitializationSequenceEventHandler : SceneEventHandler {
     // Update is called once per frame
     void Update()
     {
-        if(IsActive)
+        if(SceneIsCurrentlyActive)
         {
             //if (RevealScript.CurrentTextStatus == TextRevealLetterByLetter.TextStatus.TextToReveal)
             //{
@@ -40,7 +41,7 @@ public class InitializationSequenceEventHandler : SceneEventHandler {
             {
                 if (Input.GetKeyDown(KeyCode.Space))
                 {
-                    GM.RequestSceneChange(this.gameObject, SceneManager.SceneNames.GameView);
+                    GM.RequestSceneChange(this.gameObject, SceneManager.SceneNames.Intro, SceneManager.SceneNames.GameView);
                 }
             }
         }
@@ -50,14 +51,19 @@ public class InitializationSequenceEventHandler : SceneEventHandler {
     {
         if (a_Event == SceneManager.SceneEventType.SceneHidden)
         {
-            IsActive = false;
+            SceneIsCurrentlyActive = false;
         }
         if (a_Event == SceneManager.SceneEventType.SceneStarted)
         {
-            IsActive = true;
+            SceneIsCurrentlyActive = true;
             RevealScript.StartRevealingText();
         }
         
 
+    }
+
+    public override void RequestEventStart(GameEvent a_Event)
+    {
+        
     }
 }

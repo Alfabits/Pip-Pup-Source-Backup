@@ -67,7 +67,6 @@ public class LoadingBar : MonoBehaviour {
 
             yield return new WaitForSeconds(LoadWaitRate);
         }
-        Debug.Log("Finished loading");
         yield return null;
     }
 }

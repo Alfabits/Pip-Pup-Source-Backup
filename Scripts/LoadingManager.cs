@@ -38,6 +38,7 @@ public class LoadingManager : MonoBehaviour {
         FloatingTextGenerator,
         LoadingBar,
         BoundaryCreationAndManagement,
+        EventManager,
         NumberOfTypes
     };
 
@@ -115,7 +116,7 @@ public class LoadingManager : MonoBehaviour {
             }
             if(GlobalLoadingStatusDictionary[(KeysForScriptsToBeLoaded)i] == true)
             {
-                //Debug.Log(i + ": " + (KeysForScriptsToBeLoaded)i);
+                
             }
         }
 

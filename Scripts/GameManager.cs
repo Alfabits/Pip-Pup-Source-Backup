@@ -74,6 +74,11 @@ public class GameManager : MonoBehaviour {
             yield return null;
         }
 
+#if UNITY_EDITOR
+        //Report the time when the loading manager finished
+        Debug.Log("Game has finished loading at: <" + Time.unscaledTime + ">.");
+#endif
+
         //Check if this is the first time the player has started up the game
         if (SAL.CheckForSaveFile())
             firstTime = false;
@@ -91,16 +96,17 @@ public class GameManager : MonoBehaviour {
     /// </summary>
     /// <param name="a_Requester"></param>
     /// <param name="a_Scene"></param>
-    public void RequestSceneChange(GameObject a_Requester, SceneManager.SceneNames a_Scene)
+    public void RequestSceneChange(GameObject a_Requester, SceneManager.SceneNames a_SceneA, SceneManager.SceneNames a_SceneB)
     {
-        SM.RequestSceneChange(a_Requester, a_Scene);
+        SM.RequestSceneChange(a_Requester, a_SceneA, a_SceneB);
     }
     /// <summary>
     /// Sends a request to the Game Manager, asking to activate a Scene Start event.
     /// </summary>
     /// <param name="a_Requester"></param>
-    public void RequestSceneStart(GameObject a_Requester)
+    /// 
+    public void RequestSceneStart(GameObject a_Requester, SceneManager.SceneNames a_Scene)
     {
-        SM.RequestSceneStart(a_Requester);
+        SM.RequestSceneStart(a_Requester, a_Scene);
     }
 }

@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SceneManager : MonoBehaviour {
+public class SceneManager : MonoBehaviour
+{
 
     #region Private Variables
     LoadingManager LM;
     private SceneNames CurrentActiveScene = SceneNames.None;
     private bool ReadyForOutsideAccess = false;
-    private bool firstTime = false;
     #endregion
 
     #region Public Variables
@@ -34,9 +34,9 @@ public class SceneManager : MonoBehaviour {
     {
         None = 0,
         TitleScreen,
-        MainMenu,
         GameView,
         Intro,
+        TextMenu,
         Return
     };
 
@@ -56,7 +56,8 @@ public class SceneManager : MonoBehaviour {
     #endregion
 
     // Use this for initialization
-    void Start () {
+    void Start()
+    {
 
         LM = LoadingManager.Instance;
         SceneObjectList = new Dictionary<SceneNames, GameObject>();
@@ -68,11 +69,12 @@ public class SceneManager : MonoBehaviour {
         //Check in with the loading manager
         LM.CheckIn(this.gameObject, LoadingManager.KeysForScriptsToBeLoaded.SceneManager, true);
     }
-	
-	// Update is called once per frame
-	void Update () {
-		
-	}
+
+    // Update is called once per frame
+    void Update()
+    {
+
+    }
 
     public void GameStartRevealScenes(bool a_FirstTime)
     {
@@ -106,6 +108,10 @@ public class SceneManager : MonoBehaviour {
                         SceneObjectList.Add(SceneNames.GameView, scene);
                         SceneHandlerList.Add(SceneNames.GameView, IsHandled);
                         break;
+                    case "Text Menu":
+                        SceneObjectList.Add(SceneNames.TextMenu, scene);
+                        SceneHandlerList.Add(SceneNames.TextMenu, IsHandled);
+                        break;
                 }
             }
             else
@@ -131,6 +137,9 @@ public class SceneManager : MonoBehaviour {
             case SceneNames.GameView:
                 TempSceneScript = TempScene.AddComponent<DoggoViewEventHandler>();
                 break;
+            case SceneNames.TextMenu:
+                TempSceneScript = TempScene.AddComponent<TextMenuEventHandler>();
+                break;
         }
 
         SceneObjectList.Add(SceneNames.None, TempScene);
@@ -145,7 +154,7 @@ public class SceneManager : MonoBehaviour {
         bool StartingSceneInitialized = false;
 
         //Check if the player is starting up the game for the first time.
-        if(a_FirstTime)
+        if (a_FirstTime)
         {
             SceneToUseOnStartup = SceneNames.Intro;
         }
@@ -173,13 +182,13 @@ public class SceneManager : MonoBehaviour {
     /// </summary>
     /// <param name="a_Requester"></param>
     /// <param name="a_Scene"></param>
-    public void RequestSceneChange(GameObject a_Requester, SceneNames a_Scene)
+    public void RequestSceneChange(GameObject a_Requester, SceneNames a_SceneA, SceneNames a_SceneB)
     {
         bool ValidRequest = ValidateRequester(a_Requester, RequestType.SceneChange);
         bool RequestComplete = false;
         if (ValidRequest)
         {
-            RequestComplete = ProcessRequest(a_Requester, a_Scene, RequestType.SceneChange);
+            RequestComplete = ProcessRequest(RequestType.SceneChange, a_SceneA, a_SceneB);
         }
         else
         {
@@ -190,13 +199,13 @@ public class SceneManager : MonoBehaviour {
     /// Sends a request to the Scene Manager, asking to activate a Scene Start event.
     /// </summary>
     /// <param name="a_Requester"></param>
-    public void RequestSceneStart(GameObject a_Requester)
+    public void RequestSceneStart(GameObject a_Requester, SceneNames a_Scene)
     {
         bool ValidRequest = ValidateRequester(a_Requester, RequestType.SceneStart);
         bool RequestComplete = false;
         if (ValidRequest)
         {
-            RequestComplete = ProcessRequest(a_Requester, SceneNames.Intro, RequestType.SceneStart);
+            RequestComplete = ProcessRequest(RequestType.SceneStart, a_Scene);
         }
         else
         {
@@ -245,30 +254,19 @@ public class SceneManager : MonoBehaviour {
     /// <param name="a_Scene"></param>
     /// <param name="a_Request"></param>
     /// <returns></returns>
-    bool ProcessRequest(GameObject a_Requester, SceneNames a_Scene, RequestType a_Request)
+    bool ProcessRequest(RequestType a_Request, SceneNames a_SceneA, SceneNames a_SceneB = SceneNames.None)
     {
         bool RequestProcessed = false;
 
         //If we're switching scenes
         if (a_Request == RequestType.SceneChange)
         {
-            if (a_Requester.name == "Title")
-            {
-                RequestProcessed = SwitchScene(SceneNames.TitleScreen, a_Scene);
-            }
-            else if (a_Requester.name == "Intro")
-            {
-                RequestProcessed = SwitchScene(SceneNames.Intro, a_Scene);
-            }
-
+            RequestProcessed = SwitchScene(a_SceneA, a_SceneB);
         }
         //If we're starting a scene
         else if (a_Request == RequestType.SceneStart)
         {
-            if (a_Requester.name == "Intro")
-            {
-                RequestProcessed = StartScene(SceneHandlerList[SceneNames.Intro]);
-            }
+            RequestProcessed = StartScene(SceneHandlerList[a_SceneA]);
         }
         else
         {

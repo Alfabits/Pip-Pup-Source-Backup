@@ -75,6 +75,8 @@ public class SaveAndLoad : MonoBehaviour
         }
     }
 
+
+
     public bool CheckForSaveFile()
     {
         return File.Exists(SaveFilePath);
@@ -132,4 +134,12 @@ class PlayerData
     /// Intelligence refers to how much the doggo knows about the outside world. This only impacts which dialogue options the player can choose from.
     /// </summary>
     public int Intelligence = 1;
+}
+
+class StoryProgress
+{
+    /// <summary>
+    /// Contains a list of every event in the game
+    /// </summary>
+    Dictionary<string, GameEvent> EventCompletionList = new Dictionary<string, GameEvent>();
 }

@@ -6,14 +6,21 @@ public class DoggoViewUIFunctions : MonoBehaviour {
 
     LoadingManager LM;
 
-    public GameObject DoggoObject;
-    public GameObject SpeechBubble;
-    public GameObject[] UI;
+    [SerializeField]
+    private GameObject DoggoObject;
+    [SerializeField]
+    private GameObject SpeechBubble;
+    private Dictionary<string, GameObject> UI;
 
     // Use this for initialization
     void Start () {
 
         LM = LoadingManager.Instance;
+        UI = new Dictionary<string, GameObject>();
+        UI.Add("Talk Button", GameObject.Find("Talk Button"));
+        UI.Add("Food Button", GameObject.Find("Food Button"));
+        UI.Add("Love Button", GameObject.Find("Love Button"));
+        UI.Add("Play Button", GameObject.Find("Play Button"));
 
         //Check in with the loading manager
         LM.CheckIn(this.gameObject, LoadingManager.KeysForScriptsToBeLoaded.DoggoViewUIFunctions, true);
@@ -26,17 +33,39 @@ public class DoggoViewUIFunctions : MonoBehaviour {
 
    public void RevealGameUI()
     {
-        foreach (GameObject element in UI)
+        foreach (KeyValuePair<string, GameObject> element in UI)
         {
-            element.SetActive(true);
+            element.Value.SetActive(true);
         }
     }
 
     public void HideGameUI()
     {
-        foreach (GameObject element in UI)
+        foreach (KeyValuePair<string, GameObject> element in UI)
         {
-            element.SetActive(false);
+            element.Value.SetActive(false);
+        }
+    }
+
+    public void RevealSpecificGameUI(string[] a_UIKeys)
+    {
+        foreach (string key in a_UIKeys)
+        {
+            if(UI[key])
+            {
+                UI[key].SetActive(true);
+            }
+        }
+    }
+
+    public void HideSpecificGameUI(string[] a_UIKeys)
+    {
+        foreach (string key in a_UIKeys)
+        {
+            if (UI[key])
+            {
+                UI[key].SetActive(false);
+            }
         }
     }
 
@@ -55,6 +84,18 @@ public class DoggoViewUIFunctions : MonoBehaviour {
         DoggoObject.SetActive(true);
     }
 
-    
+    public void PrepareDefaultGameView()
+    {
+        RevealDoggo();
+        RevealGameUI();
+        HideTextBox();
+    }
+
+    public void PrepareTextEventGameView()
+    {
+        RevealDoggo();
+        RevealTextBox();
+        HideGameUI();
+    }
 
 }
