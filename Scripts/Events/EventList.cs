@@ -9,12 +9,18 @@ public class EventList : MonoBehaviour
     private GameObject ButtonPrefab;
 
     [SerializeField]
-    private EventsHeld HoldsEventsOfType = EventsHeld.New;
+    private EventsHeld HoldsEventsOfType = EventsHeld.NumberOfTypes;
 
     public bool IsLoaded
     {
         get { return isLoaded; }
         private set { isLoaded = value; }
+    }
+
+    public EventsHeld HoldsEventType
+    {
+        get { return HoldsEventsOfType; }
+        private set { HoldsEventsOfType = value; }
     }
 
     // Use this for initialization
@@ -26,11 +32,6 @@ public class EventList : MonoBehaviour
         LoadAllEvents();
 
         isLoaded = true;
-
-#if UNITY_EDITOR
-        //Report the time when the event manager finished
-        //Debug.Log(this.GetType().ToString() + " has finished loading at: <" + Time.unscaledTime + ">.");
-#endif
     }
 
     // Update is called once per frame
@@ -76,22 +77,14 @@ public class EventList : MonoBehaviour
             //If the event starts automatically, we don't want to list it in the buttons
             if (!a_Event.DoesEventStartAutomatically())
             {
-
                 switch (HoldsEventsOfType)
                 {
-                    case EventsHeld.New:
-                        //Check if the event has been completed for the first time
-                        if (!a_Event.CheckForFirstTimeCompletion())
-                        {
-                            canPrepare = true;
-                        }
-                        break;
                     case EventsHeld.OneTime:
                         //Check if the event only runs once.
                         if (a_Event.DoesEventRunOnlyOnce())
                         {
                             //Check if the event has been completed for the first time.
-                            if (a_Event.CheckForFirstTimeCompletion())
+                            if (!a_Event.CheckForFirstTimeCompletion())
                             {
                                 canPrepare = true;
                             }
@@ -152,6 +145,8 @@ public class EventList : MonoBehaviour
             statusText += "(New)";
         if (a_Event.CheckForDailyCompletion() == 1)
             statusText += " *";
+        else if (a_Event.CheckForDailyCompletion() == 0)
+            statusText += "(Daily)";
 
         //Display the event
         CreateButton(newbutton, titleText, statusText);
@@ -179,12 +174,12 @@ public class EventList : MonoBehaviour
     IEnumerable<GameEvent> GameEventCollection;
     List<GameObject> ButtonsList;
 
-    enum EventsHeld
+    public enum EventsHeld
     {
-        New = 0,
+        OneTime = 0,
         Daily,
-        OneTime,
-        Completed
+        Completed,
+        NumberOfTypes
     };
     #endregion
 }

@@ -11,6 +11,7 @@ public class TestEvent : GameEvent {
         autostart = false;
         usedelay = true;
         onetimerun = true;
+        completed = true;
         delay = 3.0f;
         eventname = "Test Event";
         EventsToBeUnlockedAfterCompletion = new GameEvent[1];
