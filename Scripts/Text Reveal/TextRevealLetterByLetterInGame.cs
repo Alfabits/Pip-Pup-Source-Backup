@@ -135,6 +135,8 @@ public class TextRevealLetterByLetterInGame : MonoBehaviour
         if (CurrentTextStatus == TextStatus.TextAllRevealed)
         {
             ActiveScriptContent = null;
+            TextIndex = 0;
+            Blinking = false;
         }
     }
 

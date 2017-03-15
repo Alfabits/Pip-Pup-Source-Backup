@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 
@@ -10,6 +11,7 @@ public class SaveAndLoad : MonoBehaviour
     [SerializeField]
     bool UseGUITestingButtons = false;
 
+    private bool FirstTimePlaying = false;
     private static string SaveFilePath;
 
     string playerName = "";
@@ -36,70 +38,296 @@ public class SaveAndLoad : MonoBehaviour
 
     }
 
-    public void SaveAllGameData()
+    public bool IsFirstTimePlaying()
+    {
+        return FirstTimePlaying;
+    }
+
+    public void CreateInitialSaveFile()
     {
         BinaryFormatter BF = new BinaryFormatter();
 
         //Overwrites any existing files in the specified path. If no file exists in this path, a new file is created.
         FileStream file = File.Create(SaveFilePath);
 
-        PlayerData data = new PlayerData();
-        data.PlayerName = "Gud Boyy";
-        data.Level = 2;
-        data.Love = 30;
-        data.Hunger = 34;
-        data.Energy = 69;
-        data.Intelligence = 3;
+        SaveData data = new SaveData();
+        data.playerData = new PlayerData();
+        data.eventDataList = new EventDataList();
 
-        BF.Serialize(file, data);
-        file.Close();
+        data.playerData.PlayerName = "Gud Boyy";
+        data.playerData.Level = 2;
+        data.playerData.Love = 30;
+        data.playerData.Hunger = 34;
+        data.playerData.Energy = 69;
+        data.playerData.Intelligence = 3;
+
+        data.eventDataList.EventList = new List<EventData>();
+
+        try
+        {
+            BF.Serialize(file, data);
+        }
+        catch (SerializationException e)
+        {
+            Debug.LogError("Failed to serialize. Reason: " + e.Message);
+            throw;
+        }
+        finally
+        {
+            file.Close();
+        }
+
+        FirstTimePlaying = true;
     }
 
-    public void LoadAllGameData()
+    public GameEvent LoadEvent(GameEvent a_Event)
     {
         if (File.Exists(SaveFilePath))
         {
             BinaryFormatter BF = new BinaryFormatter();
             FileStream file = File.Open(SaveFilePath, FileMode.Open);
-            PlayerData data = (PlayerData)BF.Deserialize(file);
+            SaveData data = (SaveData)BF.Deserialize(file);
             file.Close();
 
-            playerName = data.PlayerName;
-            level = data.Level;
-            love = data.Love;
-            hunger = data.Hunger;
-            energy = data.Energy;
-            intelligence = data.Intelligence;
+            //Search for a game event in the list that matches the passed event's name
+            for (int i = 0, n = data.eventDataList.EventList.Count; i < n; i++)
+            {
+                if(data.eventDataList.EventList[i].eventname == a_Event.GetEventName())
+                {
+                    a_Event.SetIsCompleted(data.eventDataList.EventList[i].completed);
+                    a_Event.SetDailyComletion(data.eventDataList.EventList[i].dailycompleted);
+                    a_Event.SetUnlockedStatus(data.eventDataList.EventList[i].unlocked);
+                }
+            }
 
-            Debug.Log("Name is " + playerName + ", level is " + level + ", love is " + love + ", hunger is " + hunger + ", energy is " + energy + ", and intelligence is " + intelligence + ", bork bork!");
+            //Return the modified game event
+            return a_Event;
+        }
+
+        return a_Event;
+    }
+
+    public List<GameEvent> LoadEvents(List<GameEvent> a_Events)
+    {
+        if (File.Exists(SaveFilePath))
+        {
+            BinaryFormatter BF = new BinaryFormatter();
+            FileStream file = File.Open(SaveFilePath, FileMode.Open);
+            SaveData data = (SaveData)BF.Deserialize(file);
+            file.Close();
+
+            for(int j = 0, k = a_Events.Count; j < k; j++)
+            {
+                //Search for a game event in the list that matches the passed event's name
+                for (int i = 0, n = data.eventDataList.EventList.Count; i < n; i++)
+                {
+                    if (data.eventDataList.EventList[i].eventname == a_Events[j].GetEventName())
+                    {
+                        a_Events[j].SetIsCompleted(data.eventDataList.EventList[i].completed);
+                        a_Events[j].SetDailyComletion(data.eventDataList.EventList[i].dailycompleted);
+                        a_Events[j].SetUnlockedStatus(data.eventDataList.EventList[i].unlocked);
+                    }
+                }
+            }
+            
+
+            //Return the modified game events
+            return a_Events;
+        }
+
+        return a_Events;
+    }
+
+    public void SaveEvent(GameEvent a_Event)
+    {
+        //If no file exists at the specified path, we cannot save anything
+        if (File.Exists(SaveFilePath))
+        {
+            //Create a new binary formatter, open a read-only file, and copy the SaveData from the save file
+            BinaryFormatter BF = new BinaryFormatter();
+            FileStream file = File.Open(SaveFilePath, FileMode.Open);
+            SaveData data = (SaveData)BF.Deserialize(file);
+            EventDataList dataList = data.eventDataList;
+
+            //Close the file, then re-open it to be written to
+            file.Close();
+            file = File.Create(SaveFilePath);
+
+            //If a data list does not exist, create one and assign this event to it.
+            if (dataList == null)
+            {
+                dataList = AssignEventToList(a_Event, dataList);
+            }
+            else
+            {
+                //If a list already exists, check to see if this event already exists inside of it.
+                bool found = false;
+                for (int i = 0, n = dataList.EventList.Count; i < n; i++)
+                {
+                    if (dataList.EventList[i].eventname == a_Event.GetEventName())
+                    {
+                        //If so, update the pre-existing event data
+                        Debug.Log("updating event: " + dataList.EventList[i].eventname);
+                        dataList.EventList[i].completed = a_Event.CheckForFirstTimeCompletion();
+                        dataList.EventList[i].unlocked = a_Event.CheckIfUnlocked();
+                        dataList.EventList[i].dailycompleted = a_Event.CheckForDailyCompletion();
+                        found = true;
+
+                        break;
+                    }
+                }
+
+                //If not, add the event data to the list
+                if (!found)
+                {
+                    Debug.Log("new event added: ");
+                    dataList = AssignEventToList(a_Event, dataList);
+                }
+            }
+
+            //Reassign dataList to the SaveData
+            data.eventDataList = dataList;
+
+            //Attempt to serialize the data
+            try
+            {
+                BF.Serialize(file, data);
+            }
+            catch (SerializationException e)
+            {
+                Debug.LogError("Failed to serialize. Reason: " + e.Message);
+                throw;
+            }
+            finally
+            {
+                file.Close();
+            }
+        }
+        else
+        {
+            Debug.LogError("Error: no file to save to. Please call \"CreateInitialSaveFile()\" first.");
         }
     }
 
+    public void SaveListOfEvents(List<GameEvent> a_Events)
+    {
+        //If no file exists at the specified path, we cannot save anything
+        if (File.Exists(SaveFilePath))
+        {
+            //Create a new binary formatter, open a read-only file, and copy the SaveData from the save file
+            BinaryFormatter BF = new BinaryFormatter();
+            FileStream file = File.Open(SaveFilePath, FileMode.Open);
+            SaveData data = (SaveData)BF.Deserialize(file);
+            EventDataList dataList = data.eventDataList;
 
+            //Close the file, then re-open it to be written to
+            file.Close();
+            file = File.Create(SaveFilePath);
+
+            //If a data list does not exist, create one and assign this event to it.
+            if (dataList == null)
+            {
+                dataList = AssignEventListToList(a_Events, dataList);
+            }
+            else
+            {
+                for (int j = 0, k = a_Events.Count; j < k; j++)
+                {
+                    //If a list already exists, check to see if this event already exists inside of it.
+                    bool found = false;
+                    for (int i = 0, n = dataList.EventList.Count; i < n; i++)
+                    {
+                        if (dataList.EventList[i].eventname == a_Events[j].GetEventName())
+                        {
+                            //If so, update the pre-existing event data
+                            Debug.Log("updating event: " + dataList.EventList[i].eventname);
+                            dataList.EventList[i].completed = a_Events[j].CheckForFirstTimeCompletion();
+                            dataList.EventList[i].unlocked = a_Events[j].CheckIfUnlocked();
+                            dataList.EventList[i].dailycompleted = a_Events[j].CheckForDailyCompletion();
+                            found = true;
+
+                            break;
+                        }
+                    }
+
+                    //If not, add the event list to the list
+                    if (!found)
+                    {
+                        Debug.Log("new event added: ");
+                        dataList = AssignEventToList(a_Events[j], dataList);
+                    }
+                }
+            }
+
+            //Reassign dataList to the SaveData
+            data.eventDataList = dataList;
+
+            //Attempt to serialize the data
+            try
+            {
+                BF.Serialize(file, data);
+            }
+            catch (SerializationException e)
+            {
+                Debug.LogError("Failed to serialize. Reason: " + e.Message);
+                throw;
+            }
+            finally
+            {
+                file.Close();
+                Debug.Log("File saved successfully");
+            }
+        }
+        else
+        {
+            Debug.LogError("Error: no file to save to. Please call \"CreateInitialSaveFile()\" first.");
+        }
+    }
 
     public bool CheckForSaveFile()
     {
         return File.Exists(SaveFilePath);
     }
 
-    private void OnGUI()
+    private EventDataList AssignEventToList(GameEvent a_Event, EventDataList a_DataList)
     {
-#if UNITY_EDITOR
-        if (UseGUITestingButtons)
-        {
-            if (GUI.Button(new Rect(10, 100, 100, 30), "Save"))
-            {
-                SaveAllGameData();
-            }
-            if (GUI.Button(new Rect(10, 140, 100, 30), "Load"))
-            {
-                LoadAllGameData();
-            }
-        }
-#endif
+        if (a_DataList == null)
+            a_DataList = new EventDataList();
+        EventData data = new EventData();
+
+        data.eventname = a_Event.GetEventName();
+        Debug.Log(data.eventname);
+        data.unlocked = a_Event.CheckIfUnlocked();
+        data.completed = a_Event.CheckForFirstTimeCompletion();
+        data.dailycompleted = a_Event.CheckForDailyCompletion();
+
+        a_DataList.EventList.Add(data);
+        return a_DataList;
     }
 
+    private EventDataList AssignEventListToList(List<GameEvent> a_Events, EventDataList a_DataList)
+    {
+        for (int i = 0, n = a_Events.Count; i < n; i++)
+        {
+            EventData data = new EventData();
 
+            data.eventname = a_Events[i].GetEventName();
+            Debug.Log(data.eventname);
+            data.unlocked = a_Events[i].CheckIfUnlocked();
+            data.completed = a_Events[i].CheckForFirstTimeCompletion();
+            data.dailycompleted = a_Events[i].CheckForDailyCompletion();
+
+            a_DataList.EventList.Add(data);
+        }
+        return a_DataList;
+    }
+}
+
+[System.Serializable]
+class SaveData
+{
+    public PlayerData playerData;
+    public EventDataList eventDataList;
 }
 
 [System.Serializable]
@@ -136,10 +364,17 @@ class PlayerData
     public int Intelligence = 1;
 }
 
-class StoryProgress
+[System.Serializable]
+class EventData
 {
-    /// <summary>
-    /// Contains a list of every event in the game
-    /// </summary>
-    Dictionary<string, GameEvent> EventCompletionList = new Dictionary<string, GameEvent>();
+    public bool unlocked = false;
+    public bool completed = false;
+    public int dailycompleted = 0;
+    public string eventname = "nameless";
+}
+
+[System.Serializable]
+class EventDataList
+{
+    public List<EventData> EventList;
 }

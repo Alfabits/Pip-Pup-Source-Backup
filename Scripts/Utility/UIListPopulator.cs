@@ -10,7 +10,16 @@ public static class UIListPopulator {
 
 	public static List<GameObject> InsertButtonIntoList(GameObject a_ParentObject, List<GameObject> a_ButtonsList, GameObject a_ButtonToAdd)
     {
-        GameObject tempObj = Object.Instantiate(a_ButtonToAdd, a_ParentObject.transform.position, Quaternion.identity);
+        GameObject tempObj = null;
+        if (!a_ButtonToAdd.activeInHierarchy)
+        {
+            tempObj = Object.Instantiate(a_ButtonToAdd, a_ParentObject.transform.position, Quaternion.identity);
+        }
+        else
+        {
+            tempObj = a_ButtonToAdd;
+        }
+
         tempObj.transform.SetParent(a_ParentObject.transform);
         tempObj.transform.localScale = a_ParentObject.transform.localScale;
 

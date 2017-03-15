@@ -33,14 +33,15 @@ public class DoggoViewEventHandler : SceneEventHandler
 
 #if UNITY_EDITOR
         //Report the time when the event manager finished
-        Debug.Log(this.GetType().ToString() + " has finished loading at: <" + Time.unscaledTime + ">.");
+        //Debug.Log(this.GetType().ToString() + " has finished loading at: <" + Time.unscaledTime + ">.");
 #endif
     }
 
     // Update is called once per frame
     void Update()
     {
-        if(TextRevealerScript.CurrentTextStatus == TextRevealLetterByLetterInGame.TextStatus.TextAllRevealed)
+        if(TextRevealerScript.CurrentTextStatus == TextRevealLetterByLetterInGame.TextStatus.TextAllRevealed
+            && ActiveGameEvent != null)
         {
             EndTextBoxEvent();
         }
@@ -55,32 +56,36 @@ public class DoggoViewEventHandler : SceneEventHandler
         }
         if (a_Event == SceneManager.SceneEventType.SceneRevealed || a_Event == SceneManager.SceneEventType.SceneStarted)
         {
+            TailWaggerScript.StartWaggingTail();
+            EndTextBoxEvent();
             SceneIsCurrentlyActive = true;
 
-            if (!Returned)
-                RequestEventStart(StartingGameEvent);
+            //if (!Returned)
+            //    RequestEventStart(StartingGameEvent);
         }
     }
 
     /// <summary>
-    /// Starts a text box event, assuming a valid script has been loaded. Delay defaults to 0, and will only be used if the bool is true.
+    /// Starts a text box event, given a valid GameEvent.
     /// </summary>
-    /// <param name="a_UseDelay"></param>
-    /// <param name="a_Delay"></param>
+    /// <param name="a_Event"></param>
     void BeginTextBoxEvent(GameEvent a_Event)
     {
         //Hide the game UI, and make it so doggo cannot be interacted with
         UI_Functions.HideGameUI();
         DoggoTouchDragScript.SetDraggable(false);
+        ActiveGameEvent = a_Event;
 
         if (a_Event.CheckIfEventUsesDelay())
         {
             //Start the text event after a short delay
+            GM.SetEventIsPlaying(GetType(), true);
             StartCoroutine(StartDelayedTextEvent(a_Event.GetDelayAmount()));
         }
         else
         {
             //Just start the event, no delay
+            GM.SetEventIsPlaying(GetType(), true);
             StartInstantTextEvent();
         }
     }
@@ -90,21 +95,22 @@ public class DoggoViewEventHandler : SceneEventHandler
         //Reset the text index and active script container
         TextIndex = 0;
 
-        //Change to the regular game UI and make it so doggo can be interacted with
-        string[] buttonsToReveal = new string[1];
-        string[] buttonsToHide = new string[3];
-        buttonsToReveal[0] = "Talk Button";
-        buttonsToHide[0] = "Love Button";
-        buttonsToHide[1] = "Food Button";
-        buttonsToHide[2] = "Play Button";
-        SwitchSpecificUIButtons(buttonsToReveal, buttonsToHide);
-
+        //Revert to regular game UI
+        UI_Functions.RevealGameUI();
         UI_Functions.HideTextBox();
         TextRevealerScript.CleanUpTextEvent();
         DoggoTouchDragScript.SetDraggable(true);
 
-        //Save the game
-        GM.SaveAndLoader.SaveAllGameData();
+        //Let the game manager know the event is over
+        GM.SetEventIsPlaying(GetType(), false);
+
+        //Complete the event, then save the game
+        if(ActiveGameEvent != null)
+        {
+            ActiveGameEvent.CompleteEvent();
+            GM.SaveEvent(ActiveGameEvent);
+            ActiveGameEvent = null;
+        }
     }
 
     void SwitchSpecificUIButtons(string[] a_ButtonsToReveal, string[] a_ButtonsToHide)
@@ -113,22 +119,25 @@ public class DoggoViewEventHandler : SceneEventHandler
         UI_Functions.HideSpecificGameUI(a_ButtonsToHide);
     }
 
+    //TODO: Allocate the logic on whether or not to perform an initial reveal event or a returning event to a different script
     void PerformRevealEvent(GameEvent a_Event)
     {
         //Check to see if we already have a save file
-        bool SaveFileExists = GM.SaveAndLoader.CheckForSaveFile();
+        bool firstTime = GM.SaveAndLoader.IsFirstTimePlaying();
 
-        if (SaveFileExists)
-        {
-            //Perform a return event
-            ReturningIntroEvent();
-        }
-        else if (!SaveFileExists)
-        {
-            //Perform the first-time event
-            BeginTextBoxEvent(a_Event);
-        }
+        //TODO: can uncomment when there are returning events to choose from (polish)
+        //if (!firstTime)
+        //{
+        //    //Perform a return event
+        //    ReturningIntroEvent();
+        //}
+        //else if (firstTime)
+        //{
+        //    //Perform the first-time event
+        //    BeginTextBoxEvent(a_Event);
+        //}
 
+        BeginTextBoxEvent(a_Event);
         Returned = true;
     }
 
@@ -192,6 +201,7 @@ public class DoggoViewEventHandler : SceneEventHandler
     #region PRIVATE VARIABLES
     private LoadingManager LM;
     private GameEvent StartingGameEvent;
+    private GameEvent ActiveGameEvent;
     private List<string> ActiveScriptContent;
     private int TextIndex = 0;
     private bool Returned = false;

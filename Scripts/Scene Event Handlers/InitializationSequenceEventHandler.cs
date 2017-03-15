@@ -15,7 +15,6 @@ public class InitializationSequenceEventHandler : SceneEventHandler {
         RevealScript = this.gameObject.GetComponent<TextRevealLetterByLetter>();
         if (GM == null)
             GM = GameManager.Instance;
-        SceneIsCurrentlyActive = true;
 
         LM = LoadingManager.Instance;
 
@@ -41,6 +40,7 @@ public class InitializationSequenceEventHandler : SceneEventHandler {
             {
                 if (Input.GetKeyDown(KeyCode.Space))
                 {
+                    GM.SetEventIsPlaying(GetType(), false);
                     GM.RequestSceneChange(this.gameObject, SceneManager.SceneNames.Intro, SceneManager.SceneNames.GameView);
                 }
             }
@@ -56,6 +56,7 @@ public class InitializationSequenceEventHandler : SceneEventHandler {
         if (a_Event == SceneManager.SceneEventType.SceneStarted)
         {
             SceneIsCurrentlyActive = true;
+            GM.SetEventIsPlaying(GetType(), true);
             RevealScript.StartRevealingText();
         }
         

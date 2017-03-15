@@ -196,6 +196,26 @@ public class SceneManager : MonoBehaviour
         }
     }
     /// <summary>
+    /// Sends a request to the Scene Manager, asking to switch from one scene to another. Send an event to the new scene to automatically play that event
+    /// </summary>
+    /// <param name="a_Requester"></param>
+    /// <param name="a_SceneA"></param>
+    /// <param name="a_SceneB"></param>
+    /// <param name="a_Event"></param>
+    public void RequestSceneChange_WithEvent(GameObject a_Requester, SceneNames a_SceneA, SceneNames a_SceneB, GameEvent a_Event)
+    {
+        bool ValidRequest = ValidateRequester(a_Requester, RequestType.SceneChange);
+        bool RequestComplete = false;
+        if (ValidRequest)
+        {
+            RequestComplete = ProcessRequest_WithEvent(RequestType.SceneChange, a_SceneA, a_SceneB, a_Event);
+        }
+        else
+        {
+            Debug.LogError("Error: Invalid request. Please try again with different parameters.");
+        }
+    }
+    /// <summary>
     /// Sends a request to the Scene Manager, asking to activate a Scene Start event.
     /// </summary>
     /// <param name="a_Requester"></param>
@@ -225,7 +245,8 @@ public class SceneManager : MonoBehaviour
             switch (a_Value)
             {
                 case RequestType.SceneChange:
-                    if (a_Requester.tag == "Scene")
+                    if (a_Requester.tag == "Scene" || a_Requester.tag == "Event Button"
+                        || a_Requester.tag == "Manager")
                     {
                         return true;
                     }
@@ -275,6 +296,35 @@ public class SceneManager : MonoBehaviour
 
         return RequestProcessed;
     }
+    /// <summary>
+    /// Processes a request for a Scene Manager function. All calls to non-processing functions inside GameManager should be done through here. Overwritten to include event startup support.
+    /// </summary>
+    /// <param name="a_Request"></param>
+    /// <param name="a_SceneA"></param>
+    /// <param name="a_SceneB"></param>
+    /// <param name="a_Event"></param>
+    /// <returns></returns>
+    bool ProcessRequest_WithEvent(RequestType a_Request, SceneNames a_SceneA, SceneNames a_SceneB = SceneNames.None, GameEvent a_Event = null)
+    {
+        bool RequestProcessed = false;
+
+        //If we're switching scenes
+        if (a_Request == RequestType.SceneChange)
+        {
+            RequestProcessed = SwitchSceneWithEvent(a_SceneA, a_SceneB, a_Event);
+        }
+        //If we're starting a scene
+        else if (a_Request == RequestType.SceneStart)
+        {
+            RequestProcessed = StartScene(SceneHandlerList[a_SceneA]);
+        }
+        else
+        {
+            Debug.LogError("Error: Unable to fulfill request due to invalid request type.");
+        }
+
+        return RequestProcessed;
+    }
 
     bool DeactivateNonActiveScenes()
     {
@@ -305,6 +355,24 @@ public class SceneManager : MonoBehaviour
         //Set the new, active scene
         CurrentActiveScene = a_SceneToSwitchTo;
         DeactivateNonActiveScenes();
+
+        return true;
+    }
+
+    bool SwitchSceneWithEvent(SceneNames a_SceneToSwitchFrom, SceneNames a_SceneToSwitchTo, GameEvent a_Event)
+    {
+        //Turn off the previous scene
+        TurnOffScene(SceneObjectList[a_SceneToSwitchFrom], SceneHandlerList[a_SceneToSwitchFrom]);
+
+        //Turn on the new scene
+        TurnOnScene(SceneObjectList[a_SceneToSwitchTo], SceneHandlerList[a_SceneToSwitchTo]);
+
+        //Set the new, active scene
+        CurrentActiveScene = a_SceneToSwitchTo;
+        DeactivateNonActiveScenes();
+
+        //Send an event to the new scene
+        SceneHandlerList[a_SceneToSwitchTo].RequestEventStart(a_Event);
 
         return true;
     }

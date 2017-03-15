@@ -19,7 +19,7 @@ public class BoopDoggo : MonoBehaviour {
 
 #if UNITY_EDITOR
         //Report the time when the event manager finished
-        Debug.Log(this.GetType().ToString() + " has finished loading at: <" + Time.unscaledTime + ">.");
+        //Debug.Log(this.GetType().ToString() + " has finished loading at: <" + Time.unscaledTime + ">.");
 #endif
     }
 

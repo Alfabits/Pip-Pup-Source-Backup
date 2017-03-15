@@ -14,7 +14,7 @@ public class TestEvent : GameEvent {
         completed = true;
         delay = 3.0f;
         eventname = "Test Event";
-        EventsToBeUnlockedAfterCompletion = new GameEvent[1];
+        EventsToBeUnlockedAfterCompletion = new Type[0];
         TextEventScript = new List<string>();
         SetPriorityNumber();
         CreateTextEventScript();
@@ -58,5 +58,10 @@ public class TestEvent : GameEvent {
         TextEventScript.Add("You are simply so thrilled that you cannot think of how to express yourself.");
         TextEventScript.Add("Of course, I understand. Take a moment to revel.");
         TextEventScript.Add("I will give you some time.");
+    }
+
+    protected override void UnlockNextEvents()
+    {
+        
     }
 }
