@@ -14,10 +14,12 @@ public class TouchAndDragDoggo : MonoBehaviour
     Ray ray;
     RaycastHit hit;
     GameObject hitObject;
+    Touch DoggoTouch;
 
     bool DoggoWantsToBeDragged = false;
     bool DoggoCanBeDragged = false;
     float HitLength;
+    Touch TouchToUse;
 
     LayerMask DoggoDragMask;
 
@@ -71,6 +73,33 @@ public class TouchAndDragDoggo : MonoBehaviour
             ResetDraggingParameters();
         }
 #endif
+#if UNITY_ANDROID
+        if (DoggoWantsToBeDragged)
+        {
+            //Update the raycast position
+            ray = MainCamera.ScreenPointToRay(Input.touches[0].position);
+            Debug.DrawRay(ray.origin, ray.direction * 10, Color.yellow);
+
+            //Check if the text generator can spawn a new piece of text
+            if (TextGenerator.TimerComplete)
+            {
+                TextGenerator.GenerateFloatingText("", FloatingTextGenerator.FloatingTextUse.TouchAndDragDoggo, hitObject.transform);
+                TextGenerator.ResetTimer();
+            }
+
+            //Calculate the new position/velocity of the floating doggo
+            Vector3 velocity = (ray.GetPoint(HitLength) - hitObject.transform.position) * 4.0f;
+            if (velocity.magnitude > 10.0f)
+            {
+                velocity *= 10.0f / velocity.magnitude;
+            }
+            hitObject.GetComponent<Rigidbody>().velocity = velocity;
+        }
+        else
+        {
+            ResetDraggingParameters();
+        }
+#endif
     }
 
     void ResetDraggingParameters()
@@ -80,6 +109,19 @@ public class TouchAndDragDoggo : MonoBehaviour
     }
 
     public void StartLiftingDoggo(RaycastHit a_Hit, bool a_UseTimer)
+    {
+        hitObject = a_Hit.collider.gameObject;
+        HitLength = a_Hit.distance;
+
+        if (a_UseTimer)
+        {
+            TextGenerator.UseTimer();
+        }
+
+        DoggoWantsToBeDragged = true;
+    }
+
+    public void StartLiftingDoggo(RaycastHit a_Hit, bool a_UseTimer, Touch a_Touch)
     {
         hitObject = a_Hit.collider.gameObject;
         HitLength = a_Hit.distance;

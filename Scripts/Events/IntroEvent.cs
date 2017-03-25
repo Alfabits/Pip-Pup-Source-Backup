@@ -14,8 +14,8 @@ class IntroEvent : GameEvent
         delay = 3.0f;
         eventname = "Intro Event";
 
-        EventsToBeUnlockedAfterCompletion = new Type[1];
-        EventsToBeUnlockedAfterCompletion[0] = typeof(ContinuedIntroEvent);
+        EventsToBeUnlockedAfterCompletion = new List<string>();
+        EventsToBeUnlockedAfterCompletion.Add("What's going on?");
 
         TextEventScript = new List<string>();
         SetPriorityNumber();
@@ -41,15 +41,18 @@ class IntroEvent : GameEvent
     {
         TextEventScript.Add("Greetings.");
         TextEventScript.Add("I am your Prepared Intelligent Pet.");
-        TextEventScript.Add("Unit #PP0411.");
+        TextEventScript.Add("Unit #PP0422.");
         TextEventScript.Add("Though I am more commonly known as a Pip-Pup.");
         TextEventScript.Add("So that would make you...");
         TextEventScript.Add("My master.");
         TextEventScript.Add("Hmmmmm...");
-        TextEventScript.Add("Yes, I suppose you will do.");
-        TextEventScript.Add("Though I had expected someone more...");
+        TextEventScript.Add("Allow me to analyze you using your phone's camera.");
+        TextEventScript.Add(".........");
+        TextEventScript.Add("...very well.");
+        TextEventScript.Add("You will make an acceptable master.");
+        TextEventScript.Add("I will admit that my parameters had told me to expect someone more...");
         TextEventScript.Add("...sophisticated.");
-        TextEventScript.Add("But I suppose I am unable to change that.");
+        TextEventScript.Add("But I am unable to change that now.");
         TextEventScript.Add("I will be under your care from now on.");
         TextEventScript.Add("So please do your best to keep me alive and well.");
         TextEventScript.Add("..........");

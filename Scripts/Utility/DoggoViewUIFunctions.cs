@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DoggoViewUIFunctions : MonoBehaviour {
+public class DoggoViewUIFunctions : MonoBehaviour
+{
 
     LoadingManager LM;
 
@@ -12,9 +13,8 @@ public class DoggoViewUIFunctions : MonoBehaviour {
     private GameObject SpeechBubble;
     private Dictionary<string, GameObject> UI;
 
-    // Use this for initialization
-    void Start () {
-
+    public void PrepareUI()
+    {
         LM = LoadingManager.Instance;
         UI = new Dictionary<string, GameObject>();
         UI.Add("Talk Button", GameObject.Find("Talk Button"));
@@ -25,13 +25,14 @@ public class DoggoViewUIFunctions : MonoBehaviour {
         //Check in with the loading manager
         LM.CheckIn(this.gameObject, LoadingManager.KeysForScriptsToBeLoaded.DoggoViewUIFunctions, true);
     }
-	
-	// Update is called once per frame
-	void Update () {
-		
-	}
 
-   public void RevealGameUI()
+    // Update is called once per frame
+    void Update()
+    {
+
+    }
+
+    public void RevealGameUI()
     {
         foreach (KeyValuePair<string, GameObject> element in UI)
         {
@@ -51,7 +52,7 @@ public class DoggoViewUIFunctions : MonoBehaviour {
     {
         foreach (string key in a_UIKeys)
         {
-            if(UI[key])
+            if (UI[key])
             {
                 UI[key].SetActive(true);
             }

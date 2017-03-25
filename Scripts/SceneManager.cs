@@ -8,6 +8,7 @@ public class SceneManager : MonoBehaviour
     #region Private Variables
     LoadingManager LM;
     private SceneNames CurrentActiveScene = SceneNames.None;
+    private SceneNames PreviousActiveScene = SceneNames.None;
     private bool ReadyForOutsideAccess = false;
     #endregion
 
@@ -20,6 +21,12 @@ public class SceneManager : MonoBehaviour
     {
         get { return CurrentActiveScene; }
         private set { CurrentActiveScene = value; }
+    }
+
+    public SceneNames PreviousScene
+    {
+        get { return PreviousActiveScene; }
+        private set { PreviousActiveScene = value; }
     }
 
     public bool Accessible
@@ -245,8 +252,8 @@ public class SceneManager : MonoBehaviour
             switch (a_Value)
             {
                 case RequestType.SceneChange:
-                    if (a_Requester.tag == "Scene" || a_Requester.tag == "Event Button"
-                        || a_Requester.tag == "Manager")
+                    if (a_Requester.tag == "Scene" || a_Requester.tag == "Event Button" || 
+                        a_Requester.tag == "Scene Change Button" || a_Requester.tag == "Manager")
                     {
                         return true;
                     }
@@ -354,6 +361,7 @@ public class SceneManager : MonoBehaviour
 
         //Set the new, active scene
         CurrentActiveScene = a_SceneToSwitchTo;
+        PreviousActiveScene = a_SceneToSwitchFrom;
         DeactivateNonActiveScenes();
 
         return true;
@@ -369,6 +377,7 @@ public class SceneManager : MonoBehaviour
 
         //Set the new, active scene
         CurrentActiveScene = a_SceneToSwitchTo;
+        PreviousActiveScene = a_SceneToSwitchFrom;
         DeactivateNonActiveScenes();
 
         //Send an event to the new scene

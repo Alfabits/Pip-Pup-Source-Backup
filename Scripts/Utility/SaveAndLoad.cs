@@ -1,4 +1,4 @@
-﻿using System.Collections;
+﻿using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Runtime.Serialization;
@@ -7,23 +7,15 @@ using System.IO;
 
 public class SaveAndLoad : MonoBehaviour
 {
-
     [SerializeField]
     bool UseGUITestingButtons = false;
 
     private bool FirstTimePlaying = false;
     private static string SaveFilePath;
 
-    string playerName = "";
-    int level = 1;
-    int love = 0;
-    int hunger = 100;
-    int energy = 100;
-    int intelligence = 1;
-
     private void Awake()
     {
-        SaveFilePath = Application.persistentDataPath + "/playerInfo.dat";
+        SaveFilePath = Application.persistentDataPath + "/playerInfo.sav";
     }
 
     // Use this for initialization
@@ -62,6 +54,8 @@ public class SaveAndLoad : MonoBehaviour
         data.playerData.Intelligence = 3;
 
         data.eventDataList.EventList = new List<EventData>();
+        List<GameEvent> GameEventCollection = ReflectiveEnumerator.GetEnumerableOfType<GameEvent>().ToList();
+        data.eventDataList = AssignEventListToList(GameEventCollection, data.eventDataList);
 
         try
         {
@@ -171,9 +165,21 @@ public class SaveAndLoad : MonoBehaviour
                         dataList.EventList[i].completed = a_Event.CheckForFirstTimeCompletion();
                         dataList.EventList[i].unlocked = a_Event.CheckIfUnlocked();
                         dataList.EventList[i].dailycompleted = a_Event.CheckForDailyCompletion();
-                        found = true;
 
-                        break;
+                        found = true;
+                    }
+
+                    //If this event's type matches any of the events to be unlocked, then unlock this event
+                    if (a_Event.CheckForFirstTimeCompletion())
+                    {
+                        for (int j = 0, k = a_Event.EventsToBeUnlockedAfterCompletion.Count; j < k; j++)
+                        {
+                            if (dataList.EventList[i].eventname == a_Event.EventsToBeUnlockedAfterCompletion[j]
+                                && dataList.EventList[i].unlocked == false)
+                            {
+                                dataList.EventList[i].unlocked = true;
+                            }
+                        }
                     }
                 }
 
@@ -248,6 +254,16 @@ public class SaveAndLoad : MonoBehaviour
 
                             break;
                         }
+
+                        //If this event's type matches any of the events to be unlocked, then unlock this event
+                        for (int l = 0, m = a_Events[j].EventsToBeUnlockedAfterCompletion.Count; l < m; l++)
+                        {
+                            if (dataList.EventList[i].eventname == a_Events[j].EventsToBeUnlockedAfterCompletion[l]
+                                && dataList.EventList[i].unlocked == false)
+                            {
+                                dataList.EventList[i].unlocked = true;
+                            }
+                        }
                     }
 
                     //If not, add the event list to the list
@@ -307,6 +323,9 @@ public class SaveAndLoad : MonoBehaviour
 
     private EventDataList AssignEventListToList(List<GameEvent> a_Events, EventDataList a_DataList)
     {
+        if (a_DataList == null)
+            a_DataList = new EventDataList();
+
         for (int i = 0, n = a_Events.Count; i < n; i++)
         {
             EventData data = new EventData();

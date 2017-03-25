@@ -59,11 +59,9 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
 
         DontDestroyOnLoad(this);
-    }
 
-    // Use this for initialization
-    void Start()
-    {
+        Screen.orientation = ScreenOrientation.Portrait;
+
         LM = LoadingManager.Instance;
         SM = GetComponent<SceneManager>();
         SAL = GetComponent<SaveAndLoad>();
@@ -75,6 +73,13 @@ public class GameManager : MonoBehaviour
 
         //Check in with the loading manager
         LM.CheckIn(this.gameObject, LoadingManager.KeysForScriptsToBeLoaded.GameManager, true);
+
+    }
+
+    // Use this for initialization
+    void Start()
+    {
+        
     }
 
     IEnumerator CheckForGameStart()
@@ -117,6 +122,16 @@ public class GameManager : MonoBehaviour
     public SceneManager.SceneNames GetCurrentScene()
     {
         return SM.ActiveScene;
+    }
+
+    public SceneManager.SceneNames GetPreviousScene()
+    {
+        return SM.PreviousScene;
+    }
+
+    public SceneManager.SceneNames GetHomeScene()
+    {
+        return SceneManager.SceneNames.GameView;
     }
 
     /// <summary>

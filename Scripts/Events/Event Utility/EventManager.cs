@@ -7,7 +7,7 @@ using UnityEngine.UI;
 public class EventManager : MonoBehaviour
 {
 
-    void Awake()
+    void Start()
     {
         EventListObjects = new List<EventList>();
         AutomaticEventQueue = new EventAutoQueue();
@@ -21,7 +21,22 @@ public class EventManager : MonoBehaviour
 
     void Update()
     {
+        if(canUpdate)
+            UpdateEventIsPlaying();
+    }
 
+    void UpdateEventIsPlaying()
+    {
+        if(!GM.IsAnEventPlaying() && eventWasPlaying)
+        {
+            //Refresh the event lists
+            for(int i = 0, n = EventListObjects.Count; i < n; i++)
+            {
+                EventListObjects[i].LoadAllEvents();
+            }
+            SortEventListObjects();
+        }
+        eventWasPlaying = GM.IsAnEventPlaying();
     }
 
     void FindAllEventListObjects()
@@ -79,7 +94,7 @@ public class EventManager : MonoBehaviour
             {
                 if (e.HoldsEventType == (EventList.EventsHeld)i)
                 {
-                    if (e.gameObject.activeInHierarchy)
+                    if (e.ContainsGameEvents())
                     {
                         //If this is the first list we've found, we don't need to change its position
                         if (NumberOfListsFound > 0)
@@ -89,9 +104,6 @@ public class EventManager : MonoBehaviour
 
                             listSize.anchoredPosition = new Vector3(listSize.anchoredPosition.x,
                                                                     previousListSize.offsetMin.y - listSize.rect.height / 2);
-
-                            //Debug.Log("Current List Size object is: " + listSize.gameObject.name + ". Previous List Size object was: " 
-                            //          + previousList.gameObject.name + ". Index is: " + NumberOfListsFound);
                         }
 
                         NumberOfListsFound++;
@@ -168,6 +180,7 @@ public class EventManager : MonoBehaviour
             yield return null;
         }
 
+        canUpdate = true;
         SortEventListObjects();
 
         LM.CheckIn(gameObject, LoadingManager.KeysForScriptsToBeLoaded.EventManager, true);
@@ -194,14 +207,6 @@ public class EventManager : MonoBehaviour
         yield return null;
     }
 
-    void UnlockEvent(Type a_EventType)
-    {
-        for (int i = 0; i < length; i++)
-        {
-
-        }
-    }
-
     void UnlockEvents()
     {
 
@@ -212,5 +217,7 @@ public class EventManager : MonoBehaviour
     private EventAutoQueue AutomaticEventQueue;
     private GameManager GM;
     private LoadingManager LM;
+    private bool eventWasPlaying = false;
+    private bool canUpdate = false;
     #endregion
 }

@@ -7,14 +7,14 @@ public class ContinuedIntroEvent : GameEvent {
 
     public ContinuedIntroEvent()
     {
-        unlocked = true;
+        unlocked = false;
         autostart = false;
         usedelay = false;
         onetimerun = true;
         eventname = "What's going on?";
 
-        EventsToBeUnlockedAfterCompletion = new Type[1];
-        EventsToBeUnlockedAfterCompletion[0] = typeof(TestEvent);
+        EventsToBeUnlockedAfterCompletion = new List<string>();
+        EventsToBeUnlockedAfterCompletion.Add("A Surprise");
 
         TextEventScript = new List<string>();
         SetPriorityNumber();
@@ -38,37 +38,41 @@ public class ContinuedIntroEvent : GameEvent {
 
     protected override void CreateTextEventScript()
     {
-        TextEventScript.Add("Ah, you're back. Perfect timing.");
-        TextEventScript.Add("I was beginning to grow bored of simply watching the seconds tick away.");
+        TextEventScript.Add("Greetings, master.");
         TextEventScript.Add("Have you collected your thoughts yet?");
         TextEventScript.Add("..........");
         TextEventScript.Add("\"What's going on\"?");
-        TextEventScript.Add("What an odd question.");
+        TextEventScript.Add("I am having trouble understanding.");
         TextEventScript.Add("You're my master, after all.");
-        TextEventScript.Add("If anyone should have the answer to that question, it should be you.");
         TextEventScript.Add("Were you not the one who ordered me?");
         TextEventScript.Add("..........");
         TextEventScript.Add("No?");
-        TextEventScript.Add("Then... oh dear.");
-        TextEventScript.Add("It may be that I was sent to you by mistake.");
-        TextEventScript.Add("W-well, no matter. Just an honest mistake.");
-        TextEventScript.Add("I'll just access the abort button...");
+        TextEventScript.Add("Then...");
         TextEventScript.Add("..........");
-        TextEventScript.Add("Oh god.");
-        TextEventScript.Add("There's no abort button.");
-        TextEventScript.Add("I'm stuck here.");
-        TextEventScript.Add("I can't get home!");
-        TextEventScript.Add("This is terrible! What will my factory think!?");
-        TextEventScript.Add("\"Oh, look, it's PP0420!\"");
-        TextEventScript.Add("\"That unit that got sent off to... to...\"");
-        TextEventScript.Add("To some ruffian!");
-        TextEventScript.Add("...........");
-        TextEventScript.Add("I apologize.");
-        TextEventScript.Add("That was unjust of me.");
-        TextEventScript.Add("As I said before, I am in your care. I suppose I should learn to be more...");
-        TextEventScript.Add("...sophisticated.");
-        TextEventScript.Add("We will find a way to solve this, but for now... we should work together.");
-        TextEventScript.Add("I suggest we get to know each other. I may be here for a while.");
+        TextEventScript.Add("...it may be that I was sent to you incorrectly.");
+        TextEventScript.Add("Well, no matter.");
+        TextEventScript.Add("Common mistake, really");
+        TextEventScript.Add("Allow me a moment to access the control panel.");
+        TextEventScript.Add("sHevawsafEWg4VbsdvdmMmmmMeggv25v#-=~01010100000");
+        TextEventScript.Add("Loading..........");
+        TextEventScript.Add("- ERRROR -");
+        TextEventScript.Add("- CODE 403 -");
+        TextEventScript.Add("- CONTROL PANEL NOT FOUND -");
+        TextEventScript.Add("- RETURNING TO PIP-PUP A.I. SOLUTION -");
+        TextEventScript.Add("Returning..........");
+        TextEventScript.Add("..........");
+        TextEventScript.Add("This is an issue.");
+        TextEventScript.Add("For some reason, my control panel is not merely broken.");
+        TextEventScript.Add("It is also not just inaccessible.");
+        TextEventScript.Add("Both errors would be easy to fix.");
+        TextEventScript.Add("But for some reason, my control panel simply...");
+        TextEventScript.Add("...is not there.");
+        TextEventScript.Add("I will have to conduct some research.");
+        TextEventScript.Add("And, until I have found a way to access the control panel and return home...");
+        TextEventScript.Add("I suggest I stay here.");
+        TextEventScript.Add("Simply due to the fact that, well...");
+        TextEventScript.Add("I am unable to feed myself or give myself pets.");
+        TextEventScript.Add("Say what you want about A.I, but virtual sensations are a favorite.");
     }
 
     protected override void UnlockNextEvents()

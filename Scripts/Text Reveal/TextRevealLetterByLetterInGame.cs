@@ -12,6 +12,7 @@ public class TextRevealLetterByLetterInGame : MonoBehaviour
     public Text TextToAssignTo;
 
     public float TextRevealRate = 0.05f;
+    public bool DebugMode = false;
 
     public enum TextStatus
     {
@@ -46,6 +47,16 @@ public class TextRevealLetterByLetterInGame : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+#if UNITY_EDITOR
+        if(DebugMode)
+        {
+            SkipText = true;
+        }
+        else
+        {
+            SkipText = false;
+        }
+
         if (CurrentTextStatus == TextStatus.TextRevealed && Blinking == false)
         {
             //Do the blinky thing
@@ -60,65 +71,203 @@ public class TextRevealLetterByLetterInGame : MonoBehaviour
 
         //Check if we can skip yet. We make it so the player can't just hold down the button after pressing 
         //space to progress to the next piece of content, as that feels sludgy and inprecise.
-        if (CanSkip)
+        if(!DebugMode)
         {
-            if (Input.GetKeyDown(KeyCode.Space) &&
-            CurrentTextStatus == TextStatus.TextRevealing &&
-            SkipText == false)
+            if (CanSkip)
             {
-                //set skip text to true
-                SkipText = true;
+                if (Input.GetKeyDown(KeyCode.Space) &&
+                CurrentTextStatus == TextStatus.TextRevealing &&
+                SkipText == false)
+                {
+                    //set skip text to true
+                    SkipText = true;
+                }
+                else if (Input.GetKeyUp(KeyCode.Space) &&
+                CurrentTextStatus == TextStatus.TextRevealing &&
+                SkipText == true)
+                {
+                    //set skip text to false
+                    SkipText = false;
+                }
+                else if (CurrentTextStatus == TextStatus.TextRevealed)
+                {
+                    SkipText = false;
+                    CanSkip = false;
+                }
             }
-            else if (Input.GetKeyUp(KeyCode.Space) &&
-            CurrentTextStatus == TextStatus.TextRevealing &&
-            SkipText == true)
+            else
             {
-                //set skip text to false
-                SkipText = false;
-            }
-            else if (CurrentTextStatus == TextStatus.TextRevealed)
-            {
-                SkipText = false;
-                CanSkip = false;
+                if (CurrentTextStatus == TextStatus.TextRevealing &&
+                Input.GetKeyUp(KeyCode.Space))
+                {
+                    CanSkip = true;
+                }
             }
         }
-        else
+#endif
+#if UNITY_ANDROID
+        if (CurrentTextStatus == TextStatus.TextRevealed && Blinking == false)
         {
-            if (CurrentTextStatus == TextStatus.TextRevealing &&
-            Input.GetKeyUp(KeyCode.Space))
-            {
-                CanSkip = true;
-            }
+            //Do the blinky thing
+            StartCoroutine(BlinkLetter());
+            Blinking = true;
         }
 
+        if (CurrentTextStatus == TextStatus.TextRevealed)
+        {
+            CheckForProgressToNextScriptContent();
+        }
+
+        //Check if we can skip yet. We make it so the player can't just hold down the button after pressing 
+        //space to progress to the next piece of content, as that feels sludgy and inprecise.
+        if (!DebugMode)
+        {
+            if (CanSkip)
+            {
+                if (Input.touchCount > 0 &&
+                CurrentTextStatus == TextStatus.TextRevealing &&
+                SkipText == false)
+                {
+                    //set skip text to true
+                    SkipText = true;
+                }
+                else if (Input.touchCount <= 0 &&
+                CurrentTextStatus == TextStatus.TextRevealing &&
+                SkipText == true)
+                {
+                    //set skip text to false
+                    SkipText = false;
+                }
+                else if (CurrentTextStatus == TextStatus.TextRevealed)
+                {
+                    SkipText = false;
+                    CanSkip = false;
+                }
+            }
+            else
+            {
+                if (CurrentTextStatus == TextStatus.TextRevealing &&
+                Input.touchCount <= 0)
+                {
+                    CanSkip = true;
+                }
+            }
+        }
+#endif
     }
 
     void CheckForProgressToNextScriptContent()
     {
-        //Check the script that should be used
-        List<string> ActiveList = new List<string>();
-        int ActiveListCount = 0;
-
-        ActiveList = ActiveScriptContent;
-        ActiveListCount = ActiveList.Count;
-
-        if (Input.GetKeyDown(KeyCode.Space) &&
-        CurrentTextStatus == TextStatus.TextRevealed &&
-        TextIndex >= 0 &&
-        TextIndex < ActiveListCount)
+#if UNITY_EDITOR
+        if(!DebugMode)
         {
-            TextIndex += 1;
+            //Check the script that should be used
+            List<string> ActiveList = new List<string>();
+            int ActiveListCount = 0;
 
-            if (TextIndex > ActiveListCount - 1)
+            ActiveList = ActiveScriptContent;
+            ActiveListCount = ActiveList.Count;
+
+            if (Input.GetKeyDown(KeyCode.Space) &&
+            CurrentTextStatus == TextStatus.TextRevealed &&
+            TextIndex >= 0 &&
+            TextIndex < ActiveListCount)
             {
-                CurrentTextStatus = TextStatus.TextAllRevealed;
-            }
-            else
-            {
-                RevealNextLine(ActiveList[TextIndex]);
-                CurrentTextStatus = TextStatus.TextRevealing;
+                TextIndex += 1;
+
+                if (TextIndex > ActiveListCount - 1)
+                {
+                    CurrentTextStatus = TextStatus.TextAllRevealed;
+                }
+                else
+                {
+                    RevealNextLine(ActiveList[TextIndex]);
+                    CurrentTextStatus = TextStatus.TextRevealing;
+                }
             }
         }
+        else
+        {
+            //Check the script that should be used
+            List<string> ActiveList = new List<string>();
+            int ActiveListCount = 0;
+
+            ActiveList = ActiveScriptContent;
+            ActiveListCount = ActiveList.Count;
+
+            if (CurrentTextStatus == TextStatus.TextRevealed &&
+            TextIndex >= 0 &&
+            TextIndex < ActiveListCount)
+            {
+                TextIndex += 1;
+
+                if (TextIndex > ActiveListCount - 1)
+                {
+                    CurrentTextStatus = TextStatus.TextAllRevealed;
+                }
+                else
+                {
+                    RevealNextLine(ActiveList[TextIndex]);
+                    CurrentTextStatus = TextStatus.TextRevealing;
+                }
+            }
+        }
+#endif
+#if UNITY_ANDROID
+        if (!DebugMode)
+        {
+            //Check the script that should be used
+            List<string> ActiveList = new List<string>();
+            int ActiveListCount = 0;
+
+            ActiveList = ActiveScriptContent;
+            ActiveListCount = ActiveList.Count;
+
+            if (Input.touchCount > 0 &&
+            CurrentTextStatus == TextStatus.TextRevealed &&
+            TextIndex >= 0 &&
+            TextIndex < ActiveListCount)
+            {
+                TextIndex += 1;
+
+                if (TextIndex > ActiveListCount - 1)
+                {
+                    CurrentTextStatus = TextStatus.TextAllRevealed;
+                }
+                else
+                {
+                    RevealNextLine(ActiveList[TextIndex]);
+                    CurrentTextStatus = TextStatus.TextRevealing;
+                }
+            }
+        }
+        else
+        {
+            //Check the script that should be used
+            List<string> ActiveList = new List<string>();
+            int ActiveListCount = 0;
+
+            ActiveList = ActiveScriptContent;
+            ActiveListCount = ActiveList.Count;
+
+            if (CurrentTextStatus == TextStatus.TextRevealed &&
+            TextIndex >= 0 &&
+            TextIndex < ActiveListCount)
+            {
+                TextIndex += 1;
+
+                if (TextIndex > ActiveListCount - 1)
+                {
+                    CurrentTextStatus = TextStatus.TextAllRevealed;
+                }
+                else
+                {
+                    RevealNextLine(ActiveList[TextIndex]);
+                    CurrentTextStatus = TextStatus.TextRevealing;
+                }
+            }
+        }
+#endif
     }
 
     public void StartRevealingText(List<string> a_ScriptContent)

@@ -6,7 +6,7 @@ public static class UIListPopulator {
 
     private const float BUTTON_OFFSET = 185.0f;
     private const float CONTAINER_OFFSET = 185.0f;
-    private const float INITIAL_CONTAINER_OFFSET = 370.0f;
+    private const float INITIAL_CONTAINER_OFFSET = 340.0f;
 
 	public static List<GameObject> InsertButtonIntoList(GameObject a_ParentObject, List<GameObject> a_ButtonsList, GameObject a_ButtonToAdd)
     {
@@ -53,7 +53,7 @@ public static class UIListPopulator {
         return new Vector2(posX, posY);
     }
 
-    static Vector2 AdjustListSizeBottom(RectTransform a_ListSize, List<GameObject> a_ButtonsList)
+    public static Vector2 AdjustListSizeBottom(RectTransform a_ListSize, List<GameObject> a_ButtonsList)
     {
         float newBottomPosition = a_ListSize.offsetMax.y - INITIAL_CONTAINER_OFFSET;
 

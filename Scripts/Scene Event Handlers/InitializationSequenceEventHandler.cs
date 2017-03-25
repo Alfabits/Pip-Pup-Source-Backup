@@ -38,11 +38,20 @@ public class InitializationSequenceEventHandler : SceneEventHandler {
 
             if (TextFinishedRevealing)
             {
+#if UNITY_EDITOR
                 if (Input.GetKeyDown(KeyCode.Space))
                 {
                     GM.SetEventIsPlaying(GetType(), false);
                     GM.RequestSceneChange(this.gameObject, SceneManager.SceneNames.Intro, SceneManager.SceneNames.GameView);
                 }
+#endif
+#if UNITY_ANDROID
+                if (Input.touchCount > 0)
+                {
+                    GM.SetEventIsPlaying(GetType(), false);
+                    GM.RequestSceneChange(this.gameObject, SceneManager.SceneNames.Intro, SceneManager.SceneNames.GameView);
+                }
+#endif
             }
         }
     }

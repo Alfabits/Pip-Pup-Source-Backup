@@ -26,6 +26,7 @@ public class DoggoViewEventHandler : SceneEventHandler
         StartingGameEvent = new IntroEvent();
         ActiveScriptContent = new List<string>();
 
+        UI_Functions.PrepareUI();
         UI_Functions.PrepareDefaultGameView();
 
         //Check in with the loading manager

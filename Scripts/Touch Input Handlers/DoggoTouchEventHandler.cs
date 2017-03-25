@@ -50,7 +50,6 @@ public class DoggoTouchEventHandler : MonoBehaviour
 
     void CheckForTouchUpdates()
     {
-        //TODO: Make a touch input version of this
 #if UNITY_EDITOR
         if (Input.GetMouseButtonDown(0) && !Counting)
         {
@@ -107,13 +106,81 @@ public class DoggoTouchEventHandler : MonoBehaviour
             }
         }
 #endif
+#if UNITY_ANDROID
+        foreach(Touch touch in Input.touches)
+        {
+            if (touch.phase == TouchPhase.Began && Input.touchCount == 1 && !Counting)
+            {
+                Ray ray = MainCamera.ScreenPointToRay(touch.position);
+                Debug.DrawRay(ray.origin, ray.direction * 10, Color.yellow);
+
+                if (Physics.Raycast(ray.origin, ray.direction, out hit, Mathf.Infinity, TouchScript.GetDoggoDragMask()) && hit.rigidbody)
+                {
+                    //Start counting
+                    Counting = true;
+                }
+
+            }
+            if (Input.touchCount == 1 && Counting)
+            {
+                //Check the current counted time to the target time.
+                if (CurrentCountedTime < MaximumCountedTime)
+                {
+                    //Otherwise, increase the time by a fixed amount.
+                    IncrementCounter();
+                }
+                else if (CurrentCountedTime >= MaximumCountedTime)
+                {
+                    //If we've reached the target time, stop counting.
+                    //Then send a message to TouchAndDragDoggo that the player wants to drag the dog around
+                    StartLiftingDoggo(touch);
+                    UI_Functions.HideGameUI();
+                }
+            }
+            if (touch.phase == TouchPhase.Ended)
+            {
+                if (LiftingDoggo)
+                {
+                    //Stop the doggo from being lifted
+                    StopLiftingDoggo();
+                    UI_Functions.RevealGameUI();
+
+                    //Reset the counter
+                    ResetCounter();
+                }
+                if (!LiftingDoggo)
+                {
+                    if (hit.rigidbody != null && !WasLiftingDoggo)
+                    {
+                        //Boop the doggo, since we didn't finish the countdown.
+                        BoopTheDoggo();
+                    }
+
+                    //Reset the counter
+                    ResetCounter();
+
+                    //Tell the script that we are no longer reseting the parameters
+                    WasLiftingDoggo = false;
+                }
+            }
+        }
+#endif
     }
 
     void StartLiftingDoggo()
     {
-
         //Send a message to the touch script, telling it to start lifting the doggo
         TouchScript.StartLiftingDoggo(hit, true);
+
+        //Stop counting and start lifting
+        Counting = false;
+        LiftingDoggo = true;
+    }
+
+    void StartLiftingDoggo(Touch a_Touch)
+    {
+        //Send a message to the touch script, telling it to start lifting the doggo
+        TouchScript.StartLiftingDoggo(hit, true, a_Touch);
 
         //Stop counting and start lifting
         Counting = false;

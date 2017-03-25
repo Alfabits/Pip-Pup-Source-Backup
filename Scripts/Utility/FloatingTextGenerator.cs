@@ -162,6 +162,18 @@ public class FloatingTextGenerator : MonoBehaviour {
                 case 19:
                     TextToDisplay = "not a toy";
                     break;
+
+                case 20:
+                    TextToDisplay = "smol dog \n want down";
+                    break;
+
+                case 21:
+                    TextToDisplay = "master plz";
+                    break;
+
+                case 22:
+                    TextToDisplay = "01101110 \n 01101111";
+                    break;
             }
         }
 
@@ -198,6 +210,22 @@ public class FloatingTextGenerator : MonoBehaviour {
 
                 case 6:
                     TextToDisplay = "bibbity bobbity boop";
+                    break;
+
+                case 7:
+                    TextToDisplay = "do you even boop";
+                    break;
+
+                case 8:
+                    TextToDisplay = "bop";
+                    break;
+
+                case 9:
+                    TextToDisplay = "bahp";
+                    break;
+
+                case 10:
+                    TextToDisplay = "pip";
                     break;
             }
         }

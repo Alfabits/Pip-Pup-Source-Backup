@@ -28,6 +28,8 @@ public class EventList : MonoBehaviour
     {
         ButtonsList = new List<GameObject>();
         AutomaticEventQueue = new List<GameEvent>();
+        GameEventCollection = new List<GameEvent>();
+        LockedGameEventCollection = new List<GameEvent>();
 
         //Instantiate all event types
         LoadAllEvents();
@@ -44,12 +46,15 @@ public class EventList : MonoBehaviour
     /// <summary>
     /// Creates the instances of all events that need to be loaded
     /// </summary>
-    void LoadAllEvents()
+    public void LoadAllEvents()
     {
         //Find all derived types of GameEvent, then instantiate those class types, storing them into an array
         GameEventCollection = ReflectiveEnumerator.GetEnumerableOfType<GameEvent>().ToList();
 
-        if(GameEventCollection.Count < 0)
+        //Remove all of the buttons from the button list
+        RemoveOldButtons();
+
+        if (GameEventCollection.Count <= 0)
         {
             gameObject.SetActive(false);
             return;
@@ -65,7 +70,20 @@ public class EventList : MonoBehaviour
                     i--;
                 }
             }
-        } 
+
+            LockedGameEventCollection = GameManager.Instance.LoadEvents(LockedGameEventCollection);
+
+            //Do a second check to see if there's any unlocked events in here right now
+            if (GameEventCollection.Count <= 0 && ButtonsList.Count <= 0)
+            {
+                gameObject.SetActive(false);
+                return;
+            }
+            else
+            {
+                gameObject.SetActive(true);
+            }
+        }
     }
 
     /// <summary>
@@ -76,6 +94,7 @@ public class EventList : MonoBehaviour
     {
         bool canPrepare = false;
         bool autoEvent = false;
+        bool fitsCategory = false;
 
         //If the event is unlocked, we can start checking to display it
         if (a_Event.CheckIfUnlocked())
@@ -83,69 +102,104 @@ public class EventList : MonoBehaviour
             //If the event starts automatically, we don't want to list it in the buttons
             if (!a_Event.DoesEventStartAutomatically())
             {
-                switch (HoldsEventsOfType)
-                {
-                    case EventsHeld.OneTime:
-                        //Check if the event only runs once.
-                        if (a_Event.DoesEventRunOnlyOnce())
-                        {
-                            //Check if the event has been completed for the first time.
-                            if (!a_Event.CheckForFirstTimeCompletion())
-                            {
-                                canPrepare = true;
-                                //Debug.Log("Event Name: " + a_Event.GetEventName());
-                            }
-                        }
-                        break;
-                    case EventsHeld.Daily:
-                        //Check if the event uses daily completion. If so, has the event been completed today already?
-                        if (a_Event.CheckForDailyCompletion() == 0 || a_Event.CheckForDailyCompletion() == 1)
-                        {
-                            canPrepare = true;
-                            //Debug.Log("Event Name: " + a_Event.GetEventName());
-                        }
-                        break;
-                    case EventsHeld.Completed:
-                        if (a_Event.CheckForFirstTimeCompletion())
-                        {
-                            canPrepare = true;
-                            //Debug.Log("Completed Event Name: " + a_Event.GetEventName());
-                        }
-                        break;
-                }
+                canPrepare = CheckIfEventMatchesCategory(a_Event);
             }
-            else
+            //If it does start automatically, we want to make sure it hasn't been completed once already
+            else if (a_Event.DoesEventStartAutomatically() && !a_Event.CheckForFirstTimeCompletion())
             {
-                if(a_Event.CheckForDailyCompletion() == 0 || !a_Event.CheckForFirstTimeCompletion())
-                {
-                    autoEvent = true;
-                }
+                autoEvent = true;
             }
         }
+        else
+        {
+            fitsCategory = CheckIfEventMatchesCategory(a_Event);
+        }
 
-        //If the event can be prepared, prepare it
+        //If the event is unlocked and can be prepared, prepare it
         if (canPrepare)
         {
             PrepareEventToBeDisplayed(a_Event);
+            return true;
         }
-        else if(autoEvent)
+        //If it's an automatic event, remove it from the regular list and add it to thge automatic queue
+        else if (autoEvent)
         {
             //Add this event to a seperate list which contains all events that start automatically
             AutomaticEventQueue.Add(a_Event);
             GameEventCollection.Remove(a_Event);
+            return false;
         }
+        //If it's locked, but still fits this category, remove it from the regular list and add it to the locked list
+        else if (fitsCategory)
+        {
+            GameEventCollection.Remove(a_Event);
+            LockedGameEventCollection.Add(a_Event);
+            return false;
+        }
+        //Otherwise, the event has no place here and needs to be removed from the list
         else
         {
             GameEventCollection.Remove(a_Event);
-            //Debug.Log("Completed Event Name: " + a_Event.GetEventName());
+            return false;
+        }
+    }
+
+    bool CheckIfEventMatchesCategory(GameEvent a_Event)
+    {
+        switch (HoldsEventsOfType)
+        {
+            case EventsHeld.OneTime:
+                //Check if the event only runs once.
+                if (a_Event.DoesEventRunOnlyOnce())
+                {
+                    //Check if the event has been completed for the first time.
+                    if (!a_Event.CheckForFirstTimeCompletion())
+                    {
+                        return true;
+                        //Debug.Log("Event Name: " + a_Event.GetEventName());
+                    }
+                }
+                break;
+            case EventsHeld.Daily:
+                //Check if the event uses daily completion. If so, has the event been completed today already?
+                if (a_Event.CheckForDailyCompletion() == 0 || a_Event.CheckForDailyCompletion() == 1)
+                {
+                    return true;
+                    //Debug.Log("Event Name: " + a_Event.GetEventName());
+                }
+                break;
+            case EventsHeld.Completed:
+                if (a_Event.CheckForFirstTimeCompletion())
+                {
+                    return true;
+                    //Debug.Log("Completed Event Name: " + a_Event.GetEventName());
+                }
+                break;
         }
 
-        return canPrepare;
+        return false;
+    }
+
+    public List<GameEvent> GetLockedGameEvents()
+    {
+        return LockedGameEventCollection;
     }
 
     public List<GameEvent> GetGameEventCollection()
     {
         return GameEventCollection;
+    }
+
+    public bool ContainsGameEvents()
+    {
+        if(GameEventCollection.Count > 0 && ButtonsList.Count > 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     public void OverwrriteGameEventCollection(List<GameEvent> a_NewList)
@@ -180,9 +234,9 @@ public class EventList : MonoBehaviour
     /// <returns></returns>
     public GameEvent GetAutomaticEventByPriority(int a_PriorityNumber)
     {
-        foreach(GameEvent e in GameEventCollection)
+        foreach (GameEvent e in GameEventCollection)
         {
-            if(e.DoesEventStartAutomatically() && e.GetEventPriorityNumber() == a_PriorityNumber)
+            if (e.DoesEventStartAutomatically() && e.GetEventPriorityNumber() == a_PriorityNumber)
             {
                 return e;
             }
@@ -199,9 +253,9 @@ public class EventList : MonoBehaviour
     {
         GameEvent eventToReturn = null;
         int priority = 0;
-        foreach(GameEvent e in GameEventCollection)
+        foreach (GameEvent e in GameEventCollection)
         {
-            if(e.DoesEventStartAutomatically() && e.GetEventPriorityNumber() > priority)
+            if (e.DoesEventStartAutomatically() && e.GetEventPriorityNumber() > priority)
             {
                 eventToReturn = e;
                 priority = e.GetEventPriorityNumber();
@@ -274,10 +328,26 @@ public class EventList : MonoBehaviour
         ButtonsList = UIListPopulator.InsertButtonIntoList(gameObject, ButtonsList, objectToAdd);
     }
 
+    void RemoveOldButtons()
+    {
+        for (int i = 0; i < ButtonsList.Count; i++)
+        {
+            GameObject button = ButtonsList[i];
+            ButtonsList.RemoveAt(i);
+            Destroy(button);
+
+            i--;
+        }
+
+        Vector2 newBottom = UIListPopulator.AdjustListSizeBottom(gameObject.GetComponent<RectTransform>(), ButtonsList);
+        gameObject.GetComponent<RectTransform>().offsetMin = newBottom;
+    }
+
     #region PRIVATE_VARIABLES
     bool isLoaded = false;
     DoggoViewUIFunctions UI_Functions;
     List<GameEvent> GameEventCollection;
+    List<GameEvent> LockedGameEventCollection;
     List<GameEvent> AutomaticEventQueue;
     List<GameObject> ButtonsList;
 

@@ -22,7 +22,7 @@ public abstract class GameEvent : IComparable<GameEvent>
     protected int priorityNumber = -1;
     protected float delay = 3.0f;
     protected string eventname = "nameless";
-    protected Type[] EventsToBeUnlockedAfterCompletion;
+    public List<string> EventsToBeUnlockedAfterCompletion;
     protected List<string> TextEventScript;
     protected EventManager EM;
 
