@@ -54,7 +54,7 @@ public class DoggoTouchEventHandler : MonoBehaviour
         if (Input.GetMouseButtonDown(0) && !Counting)
         {
             Ray ray = MainCamera.ScreenPointToRay(Input.mousePosition);
-            Debug.DrawRay(ray.origin, ray.direction * 10, Color.yellow);
+            //Debug.DrawRay(ray.origin, ray.direction * 10, Color.yellow);
 
             if (Physics.Raycast(ray.origin, ray.direction, out hit, Mathf.Infinity, TouchScript.GetDoggoDragMask()) && hit.rigidbody)
             {
@@ -105,14 +105,12 @@ public class DoggoTouchEventHandler : MonoBehaviour
                 WasLiftingDoggo = false;
             }
         }
-#endif
-#if UNITY_ANDROID
+#elif UNITY_ANDROID
         foreach(Touch touch in Input.touches)
         {
             if (touch.phase == TouchPhase.Began && Input.touchCount == 1 && !Counting)
             {
                 Ray ray = MainCamera.ScreenPointToRay(touch.position);
-                Debug.DrawRay(ray.origin, ray.direction * 10, Color.yellow);
 
                 if (Physics.Raycast(ray.origin, ray.direction, out hit, Mathf.Infinity, TouchScript.GetDoggoDragMask()) && hit.rigidbody)
                 {

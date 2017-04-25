@@ -72,8 +72,7 @@ public class TouchAndDragDoggo : MonoBehaviour
         {
             ResetDraggingParameters();
         }
-#endif
-#if UNITY_ANDROID
+#elif UNITY_ANDROID
         if (DoggoWantsToBeDragged)
         {
             //Update the raycast position

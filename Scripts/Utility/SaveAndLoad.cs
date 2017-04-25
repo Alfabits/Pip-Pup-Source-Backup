@@ -4,6 +4,7 @@ using UnityEngine;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
+using System.Reflection;
 
 public class SaveAndLoad : MonoBehaviour
 {
@@ -15,7 +16,7 @@ public class SaveAndLoad : MonoBehaviour
 
     private void Awake()
     {
-        SaveFilePath = Application.persistentDataPath + "/playerInfo.sav";
+        SaveFilePath = Application.persistentDataPath + "/playerInfo.dat";
     }
 
     // Use this for initialization
@@ -46,12 +47,11 @@ public class SaveAndLoad : MonoBehaviour
         data.playerData = new PlayerData();
         data.eventDataList = new EventDataList();
 
-        data.playerData.PlayerName = "Gud Boyy";
-        data.playerData.Level = 2;
-        data.playerData.Love = 30;
-        data.playerData.Hunger = 34;
-        data.playerData.Energy = 69;
-        data.playerData.Intelligence = 3;
+        data.playerData.PlayerName = "Pip Pup";
+        data.playerData.Level = 1;
+        data.playerData.Love = 0;
+        data.playerData.Hunger = 100;
+        data.playerData.Energy = 100;
 
         data.eventDataList.EventList = new List<EventData>();
         List<GameEvent> GameEventCollection = ReflectiveEnumerator.GetEnumerableOfType<GameEvent>().ToList();
@@ -86,11 +86,37 @@ public class SaveAndLoad : MonoBehaviour
             //Search for a game event in the list that matches the passed event's name
             for (int i = 0, n = data.eventDataList.EventList.Count; i < n; i++)
             {
-                if(data.eventDataList.EventList[i].eventname == a_Event.GetEventName())
+                if (data.eventDataList.EventList[i].eventname == a_Event.GetEventName())
                 {
                     a_Event.SetIsCompleted(data.eventDataList.EventList[i].completed);
                     a_Event.SetDailyComletion(data.eventDataList.EventList[i].dailycompleted);
                     a_Event.SetUnlockedStatus(data.eventDataList.EventList[i].unlocked);
+                }
+
+                //If this event's type matches any of the events to be unlocked, then unlock this event
+                if (a_Event.CheckForFirstTimeCompletion())
+                {
+                    for (int j = 0, k = a_Event.EventsToBeUnlockedAfterCompletion.Count; j < k; j++)
+                    {
+                        if (data.eventDataList.EventList[i].eventname == a_Event.EventsToBeUnlockedAfterCompletion[j]
+                            && data.eventDataList.EventList[i].unlocked == false
+                            && data.playerData.Level >= a_Event.GetLevelRequired())
+                        {
+                            FileStream fileWriter = File.Open(SaveFilePath, FileMode.Open);
+                            data.eventDataList.EventList[i].unlocked = true;
+                            BF.Serialize(file, data);
+                            file.Close();
+                        }
+                        else if (data.eventDataList.EventList[i].eventname == a_Event.GetEventName())
+                        {
+                            //Check if it has updated the player's stats
+                            if (data.eventDataList.EventList[i].lovegiven == false)
+                            {
+                                data.playerData.Love += a_Event.GetLoveGiven();
+                                data.eventDataList.EventList[i].lovegiven = true;
+                            }
+                        }
+                    }
                 }
             }
 
@@ -110,7 +136,7 @@ public class SaveAndLoad : MonoBehaviour
             SaveData data = (SaveData)BF.Deserialize(file);
             file.Close();
 
-            for(int j = 0, k = a_Events.Count; j < k; j++)
+            for (int j = 0, k = a_Events.Count; j < k; j++)
             {
                 //Search for a game event in the list that matches the passed event's name
                 for (int i = 0, n = data.eventDataList.EventList.Count; i < n; i++)
@@ -121,9 +147,35 @@ public class SaveAndLoad : MonoBehaviour
                         a_Events[j].SetDailyComletion(data.eventDataList.EventList[i].dailycompleted);
                         a_Events[j].SetUnlockedStatus(data.eventDataList.EventList[i].unlocked);
                     }
+
+                    //If this event's type matches any of the events to be unlocked, then unlock this event
+                    if (a_Events[j].CheckForFirstTimeCompletion())
+                    {
+                        for (int d = 0, e = a_Events[j].EventsToBeUnlockedAfterCompletion.Count; d < e; d++)
+                        {
+                            if (data.eventDataList.EventList[i].eventname == a_Events[j].EventsToBeUnlockedAfterCompletion[d]
+                                && data.eventDataList.EventList[i].unlocked == false
+                                && data.playerData.Level >= a_Events[j].GetLevelRequired())
+                            {
+                                FileStream fileWriter = File.Open(SaveFilePath, FileMode.Open);
+                                data.eventDataList.EventList[j].unlocked = true;
+                                BF.Serialize(file, data);
+                                file.Close();
+                            }
+                            else if (data.eventDataList.EventList[i].eventname == a_Events[j].GetEventName())
+                            {
+                                //Check if it has updated the player's stats
+                                if (data.eventDataList.EventList[i].lovegiven == false)
+                                {
+                                    data.playerData.Love += a_Events[j].GetLoveGiven();
+                                    data.eventDataList.EventList[i].lovegiven = true;
+                                }
+                            }
+                        }
+                    }
                 }
             }
-            
+
 
             //Return the modified game events
             return a_Events;
@@ -174,10 +226,22 @@ public class SaveAndLoad : MonoBehaviour
                     {
                         for (int j = 0, k = a_Event.EventsToBeUnlockedAfterCompletion.Count; j < k; j++)
                         {
-                            if (dataList.EventList[i].eventname == a_Event.EventsToBeUnlockedAfterCompletion[j]
-                                && dataList.EventList[i].unlocked == false)
+                            if (dataList.EventList[i].eventname == a_Event.EventsToBeUnlockedAfterCompletion[j])
                             {
-                                dataList.EventList[i].unlocked = true;
+                                //Check if the event is not unlocked. If it isn't, and the player meets the stats requirements, unlock it
+                                if (dataList.EventList[i].unlocked == false && data.playerData.Level >= a_Event.GetLevelRequired())
+                                {
+                                    dataList.EventList[i].unlocked = true;
+                                }
+                            }
+                            else if (dataList.EventList[i].eventname == a_Event.GetEventName())
+                            {
+                                //Check if it has updated the player's stats
+                                if (dataList.EventList[i].lovegiven == false)
+                                {
+                                    data.playerData.Love += a_Event.GetLoveGiven();
+                                    dataList.EventList[i].lovegiven = true;
+                                }
                             }
                         }
                     }
@@ -256,12 +320,28 @@ public class SaveAndLoad : MonoBehaviour
                         }
 
                         //If this event's type matches any of the events to be unlocked, then unlock this event
-                        for (int l = 0, m = a_Events[j].EventsToBeUnlockedAfterCompletion.Count; l < m; l++)
+                        if (a_Events[j].CheckForFirstTimeCompletion())
                         {
-                            if (dataList.EventList[i].eventname == a_Events[j].EventsToBeUnlockedAfterCompletion[l]
-                                && dataList.EventList[i].unlocked == false)
+                            for (int l = 0, m = a_Events[j].EventsToBeUnlockedAfterCompletion.Count; l < m; l++)
                             {
-                                dataList.EventList[i].unlocked = true;
+                                if (dataList.EventList[i].eventname == a_Events[j].EventsToBeUnlockedAfterCompletion[l])
+                                {
+                                    if(dataList.EventList[i].unlocked == false && data.playerData.Level >= a_Events[j].GetLevelRequired())
+                                        dataList.EventList[i].unlocked = true;
+                                }
+                                else if (dataList.EventList[i].eventname == a_Events[j].GetEventName())
+                                {
+                                    //Check if it has updated the player's stats
+                                    if (dataList.EventList[i].lovegiven == false)
+                                    {
+                                        data.playerData.Love += a_Events[j].GetLoveGiven();
+
+                                        if (data.playerData.Love >= 100)
+                                            data.playerData = LevelUp(data.playerData);
+
+                                        dataList.EventList[i].lovegiven = true;
+                                    }
+                                }
                             }
                         }
                     }
@@ -298,6 +378,53 @@ public class SaveAndLoad : MonoBehaviour
         {
             Debug.LogError("Error: no file to save to. Please call \"CreateInitialSaveFile()\" first.");
         }
+    }
+
+    public void SaveStats(int[] a_Stats)
+    {
+        //If no file exists at the specified path, we cannot save anything
+        if (File.Exists(SaveFilePath))
+        {
+            //Create a new binary formatter, open a read-only file, and copy the SaveData from the save file
+            BinaryFormatter BF = new BinaryFormatter();
+            FileStream file = File.Open(SaveFilePath, FileMode.Open);
+            SaveData data = (SaveData)BF.Deserialize(file);
+            PlayerData statsData = data.playerData;
+
+            //Close the file, then re-open it to be written to
+            file.Close();
+            file = File.Create(SaveFilePath);
+
+            statsData.Level = a_Stats[0];
+            statsData.Love = a_Stats[1];
+            statsData.Hunger = a_Stats[2];
+            statsData.Energy = a_Stats[3];
+
+            data.playerData = statsData;
+
+            //Attempt to serialize the data
+            try
+            {
+                BF.Serialize(file, data);
+            }
+            catch (SerializationException e)
+            {
+                Debug.LogError("Failed to serialize. Reason: " + e.Message);
+                throw;
+            }
+            finally
+            {
+                file.Close();
+                Debug.Log("File saved successfully");
+            }
+        }
+    }
+
+    private PlayerData LevelUp(PlayerData a_Data)
+    {
+        a_Data.Love = 
+        a_Data.Level += 1;
+        return a_Data;
     }
 
     public bool CheckForSaveFile()
@@ -340,6 +467,148 @@ public class SaveAndLoad : MonoBehaviour
         }
         return a_DataList;
     }
+
+    public int[] GetAllStats()
+    {
+        int[] playerStats = { 0, 0, 0, 0 };
+
+        //If no file exists at the specified path, we cannot save anything
+        if (File.Exists(SaveFilePath))
+        {
+            //Create a new binary formatter, open a read-only file, and copy the SaveData from the save file
+            BinaryFormatter BF = new BinaryFormatter();
+            FileStream file = File.Open(SaveFilePath, FileMode.Open);
+            SaveData data = (SaveData)BF.Deserialize(file);
+
+            playerStats[0] = data.playerData.Level;
+            playerStats[1] = data.playerData.Love;
+            playerStats[2] = data.playerData.Hunger;
+            playerStats[3] = data.playerData.Energy;
+
+            //Close the file, then re-open it to be written to
+            file.Close();
+        }
+
+        return playerStats;
+    }
+
+    public string GetPlayerName()
+    {
+        string name = "";
+        //If no file exists at the specified path, we cannot save anything
+        if (File.Exists(SaveFilePath))
+        {
+            //Create a new binary formatter, open a read-only file, and copy the SaveData from the save file
+            BinaryFormatter BF = new BinaryFormatter();
+            FileStream file = File.Open(SaveFilePath, FileMode.Open);
+            SaveData data = (SaveData)BF.Deserialize(file);
+
+            name = data.playerData.PlayerName;
+
+            file.Close();
+        }
+
+        return name;
+    }
+
+    public int GetLevel()
+    {
+        int level = 0;
+
+        //If no file exists at the specified path, we cannot save anything
+        if (File.Exists(SaveFilePath))
+        {
+            //Create a new binary formatter, open a read-only file, and copy the SaveData from the save file
+            BinaryFormatter BF = new BinaryFormatter();
+            FileStream file = File.Open(SaveFilePath, FileMode.Open);
+            SaveData data = (SaveData)BF.Deserialize(file);
+
+            level = data.playerData.Level;
+
+            file.Close();
+        }
+
+        return level;
+    }
+
+    public int GetLove()
+    {
+        int love = 0;
+
+        //If no file exists at the specified path, we cannot save anything
+        if (File.Exists(SaveFilePath))
+        {
+            //Create a new binary formatter, open a read-only file, and copy the SaveData from the save file
+            BinaryFormatter BF = new BinaryFormatter();
+            FileStream file = File.Open(SaveFilePath, FileMode.Open);
+            SaveData data = (SaveData)BF.Deserialize(file);
+
+            love = data.playerData.Love;
+
+            file.Close();
+        }
+
+        return love;
+    }
+
+    public int GetHunger()
+    {
+        int hunger = 0;
+
+        //If no file exists at the specified path, we cannot save anything
+        if (File.Exists(SaveFilePath))
+        {
+            //Create a new binary formatter, open a read-only file, and copy the SaveData from the save file
+            BinaryFormatter BF = new BinaryFormatter();
+            FileStream file = File.Open(SaveFilePath, FileMode.Open);
+            SaveData data = (SaveData)BF.Deserialize(file);
+
+            hunger = data.playerData.Hunger;
+
+            file.Close();
+        }
+
+        return hunger;
+    }
+
+    public int GetEnergy()
+    {
+        int energy = 0;
+
+        //If no file exists at the specified path, we cannot save anything
+        if (File.Exists(SaveFilePath))
+        {
+            //Create a new binary formatter, open a read-only file, and copy the SaveData from the save file
+            BinaryFormatter BF = new BinaryFormatter();
+            FileStream file = File.Open(SaveFilePath, FileMode.Open);
+            SaveData data = (SaveData)BF.Deserialize(file);
+
+            energy = data.playerData.Energy;
+
+            file.Close();
+        }
+
+        return energy;
+    }
+
+    void Save(BinaryFormatter BF, FileStream file, SaveData data)
+    {
+        //Attempt to serialize the data
+        try
+        {
+            BF.Serialize(file, data);
+        }
+        catch (SerializationException e)
+        {
+            Debug.LogError("Failed to serialize. Reason: " + e.Message);
+            throw;
+        }
+        finally
+        {
+            file.Close();
+            Debug.Log("File saved successfully");
+        }
+    }
 }
 
 [System.Serializable]
@@ -376,16 +645,12 @@ class PlayerData
     /// Energy determines how many more activities the doggo can perform in one day. Energy resets every 24 hours, though some food can replenish it.
     /// </summary>
     public int Energy = 100;
-
-    /// <summary>
-    /// Intelligence refers to how much the doggo knows about the outside world. This only impacts which dialogue options the player can choose from.
-    /// </summary>
-    public int Intelligence = 1;
 }
 
 [System.Serializable]
 class EventData
 {
+    public bool lovegiven = false;
     public bool unlocked = false;
     public bool completed = false;
     public int dailycompleted = 0;

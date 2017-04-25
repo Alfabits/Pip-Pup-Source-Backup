@@ -7,6 +7,8 @@ public class TextMenuEventHandler : SceneEventHandler {
 
     #region Private Variables
     Dictionary<string, GameEvent> GameEventDictionary;
+    [SerializeField]
+    private TouchAndScroll Scroller;
     #endregion
 
     // Use this for initialization
@@ -27,6 +29,8 @@ public class TextMenuEventHandler : SceneEventHandler {
         }
         if(a_Event == SceneManager.SceneEventType.SceneRevealed)
         {
+            if (Scroller != null)
+                Scroller.ResetActiveLists();
             SceneIsCurrentlyActive = true;
         }
     }

@@ -10,11 +10,15 @@ public class EventAttachment : MonoBehaviour {
         get { return objectEvent; }
         private set { objectEvent = value; }
     }
+
+    EventStartupStatsChecker StatsChecker;
+
     #endregion
 
     // Use this for initialization
     void Awake () {
         GM = GameManager.Instance;
+        StatsChecker = new EventStartupStatsChecker();
 	}
 	
 	// Update is called once per frame
@@ -34,7 +38,10 @@ public class EventAttachment : MonoBehaviour {
 
     public void StartObjectEvent_ViaSceneChange()
     {
-        GM.RequestSceneChange_WithEvent(gameObject, GM.GetCurrentScene(), SceneManager.SceneNames.GameView, objectEvent);
+        bool canStart = StatsChecker.StatsAreOkay(GM.SaveAndLoader.GetEnergy(), AttachedEvent.GetEnergyRequired(), GM.SaveAndLoader.GetHunger());
+
+        if(canStart)
+            GM.RequestSceneChange_WithEvent(gameObject, GM.GetCurrentScene(), SceneManager.SceneNames.GameView, objectEvent);
     }
 
     private GameManager GM;

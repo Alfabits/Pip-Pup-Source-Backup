@@ -9,10 +9,12 @@ public class TestEvent : GameEvent {
     {
         unlocked = false;
         autostart = false;
-        onetimerun = true;
+        regular_events = true;
         completed = true;
         eventname = "Test Event";
+
         EventsToBeUnlockedAfterCompletion = new List<string>();
+
         TextEventScript = new List<string>();
         SetPriorityNumber();
         CreateTextEventScript();

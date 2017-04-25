@@ -10,12 +10,16 @@ class IntroEvent : GameEvent
         unlocked = true;
         autostart = true;
         usedelay = true;
-        onetimerun = true;
+        regular_events = true;
         delay = 3.0f;
         eventname = "Intro Event";
 
         EventsToBeUnlockedAfterCompletion = new List<string>();
         EventsToBeUnlockedAfterCompletion.Add("What's going on?");
+
+        LoveGiven = 20;
+        EnergyRequired = 0;
+        LevelRequired = 0;
 
         TextEventScript = new List<string>();
         SetPriorityNumber();

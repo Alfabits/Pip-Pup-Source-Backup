@@ -52,10 +52,6 @@ public class TextRevealLetterByLetterInGame : MonoBehaviour
         {
             SkipText = true;
         }
-        else
-        {
-            SkipText = false;
-        }
 
         if (CurrentTextStatus == TextStatus.TextRevealed && Blinking == false)
         {
@@ -97,15 +93,13 @@ public class TextRevealLetterByLetterInGame : MonoBehaviour
             }
             else
             {
-                if (CurrentTextStatus == TextStatus.TextRevealing &&
-                Input.GetKeyUp(KeyCode.Space))
+                if (Input.GetKeyUp(KeyCode.Space))
                 {
                     CanSkip = true;
                 }
             }
         }
-#endif
-#if UNITY_ANDROID
+#elif UNITY_ANDROID
         if (CurrentTextStatus == TextStatus.TextRevealed && Blinking == false)
         {
             //Do the blinky thing
@@ -212,8 +206,7 @@ public class TextRevealLetterByLetterInGame : MonoBehaviour
                 }
             }
         }
-#endif
-#if UNITY_ANDROID
+#elif UNITY_ANDROID
         if (!DebugMode)
         {
             //Check the script that should be used

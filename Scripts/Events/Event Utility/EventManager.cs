@@ -87,7 +87,7 @@ public class EventManager : MonoBehaviour
         EventList previousList = null;
         int NumberOfListsFound = 0;
 
-        //The enum is ordered in terms of priority, so using a basic for loop will order the lists correctly
+        //The enum is ordered in terms of priority, so using a basic for loop will sort the lists correctly
         for (int i = 0; i < (int)EventList.EventsHeld.NumberOfTypes; i++)
         {
             foreach (EventList e in EventListObjects)
@@ -198,6 +198,7 @@ public class EventManager : MonoBehaviour
             if (!GM.IsAnEventPlaying() && GM.EventReady)
             {
                 GM.RequestSceneChange_WithEvent(gameObject, GM.GetCurrentScene(), SceneManager.SceneNames.GameView, AutomaticEventQueue.GetNextEvent());
+                GM.SetEventIsPlaying(true);
                 AutomaticEventQueue.ClearNextGameEvent();
             }
 

@@ -41,15 +41,14 @@ public class InitializationSequenceEventHandler : SceneEventHandler {
 #if UNITY_EDITOR
                 if (Input.GetKeyDown(KeyCode.Space))
                 {
-                    GM.SetEventIsPlaying(GetType(), false);
-                    GM.RequestSceneChange(this.gameObject, SceneManager.SceneNames.Intro, SceneManager.SceneNames.GameView);
+                    GM.SetEventIsPlaying(false);
+                    GM.RequestSceneChange(gameObject, SceneManager.SceneNames.Intro, SceneManager.SceneNames.GameView);
                 }
-#endif
-#if UNITY_ANDROID
+#elif UNITY_ANDROID
                 if (Input.touchCount > 0)
                 {
                     GM.SetEventIsPlaying(GetType(), false);
-                    GM.RequestSceneChange(this.gameObject, SceneManager.SceneNames.Intro, SceneManager.SceneNames.GameView);
+                    GM.RequestSceneChange(gameObject, SceneManager.SceneNames.Intro, SceneManager.SceneNames.GameView);
                 }
 #endif
             }
@@ -65,7 +64,7 @@ public class InitializationSequenceEventHandler : SceneEventHandler {
         if (a_Event == SceneManager.SceneEventType.SceneStarted)
         {
             SceneIsCurrentlyActive = true;
-            GM.SetEventIsPlaying(GetType(), true);
+            GM.SetEventIsPlaying(true);
             RevealScript.StartRevealingText();
         }
         

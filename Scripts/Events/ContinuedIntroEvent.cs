@@ -10,11 +10,16 @@ public class ContinuedIntroEvent : GameEvent {
         unlocked = false;
         autostart = false;
         usedelay = false;
-        onetimerun = true;
+        regular_events = true;
         eventname = "What's going on?";
 
         EventsToBeUnlockedAfterCompletion = new List<string>();
         EventsToBeUnlockedAfterCompletion.Add("A Surprise");
+        EventsToBeUnlockedAfterCompletion.Add("What are puns?");
+
+        LoveGiven = 30;
+        EnergyRequired = 0;
+        LevelRequired = 0;
 
         TextEventScript = new List<string>();
         SetPriorityNumber();

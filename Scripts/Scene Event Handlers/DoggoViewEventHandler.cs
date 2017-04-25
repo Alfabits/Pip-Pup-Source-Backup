@@ -15,22 +15,32 @@ public class DoggoViewEventHandler : SceneEventHandler
     private TouchAndDragDoggo DoggoTouchDragScript;
     [SerializeField]
     private TailWag TailWaggerScript;
+    [SerializeField]
+    private LocalStatsKeeper StatsKeeper;
+    [SerializeField]
+    private FloatingTextGenerator TextGenerator;
+    private ChooseRandomLoveEvent LoveEventChooser;
+    [SerializeField]
+    private GameObject FoodObject;
+    private FeedAnimation CreatedFeederScript;
+    private bool wasEating;
+    private StatsChangeAnimation StatsAnimator;
+
 
     // Use this for initialization
     void Start()
     {
-        if (GM == null)
-            GM = GameManager.Instance;
+        GM = GameManager.Instance;
         LM = LoadingManager.Instance;
-
         StartingGameEvent = new IntroEvent();
         ActiveScriptContent = new List<string>();
+        LoveEventChooser = new ChooseRandomLoveEvent();
 
         UI_Functions.PrepareUI();
         UI_Functions.PrepareDefaultGameView();
 
         //Check in with the loading manager
-        LM.CheckIn(this.gameObject, LoadingManager.KeysForScriptsToBeLoaded.DoggoViewEventHandler, true);
+        LM.CheckIn(gameObject, LoadingManager.KeysForScriptsToBeLoaded.DoggoViewEventHandler, true);
 
 #if UNITY_EDITOR
         //Report the time when the event manager finished
@@ -46,6 +56,8 @@ public class DoggoViewEventHandler : SceneEventHandler
         {
             EndTextBoxEvent();
         }
+
+        UpdateFeeding();
     }
 
     //A gateway for performing certain actions when certain events are triggered.
@@ -54,6 +66,8 @@ public class DoggoViewEventHandler : SceneEventHandler
         if (a_Event == SceneManager.SceneEventType.SceneHidden)
         {
             SceneIsCurrentlyActive = false;
+            TailWaggerScript.StopWaggingTail();
+            
         }
         if (a_Event == SceneManager.SceneEventType.SceneRevealed || a_Event == SceneManager.SceneEventType.SceneStarted)
         {
@@ -70,7 +84,7 @@ public class DoggoViewEventHandler : SceneEventHandler
     /// Starts a text box event, given a valid GameEvent.
     /// </summary>
     /// <param name="a_Event"></param>
-    void BeginTextBoxEvent(GameEvent a_Event)
+    public void BeginTextBoxEvent(GameEvent a_Event)
     {
         //Hide the game UI, and make it so doggo cannot be interacted with
         UI_Functions.HideGameUI();
@@ -80,13 +94,13 @@ public class DoggoViewEventHandler : SceneEventHandler
         if (a_Event.CheckIfEventUsesDelay())
         {
             //Start the text event after a short delay
-            GM.SetEventIsPlaying(GetType(), true);
+            GM.SetEventIsPlaying(true);
             StartCoroutine(StartDelayedTextEvent(a_Event.GetDelayAmount()));
         }
         else
         {
             //Just start the event, no delay
-            GM.SetEventIsPlaying(GetType(), true);
+            GM.SetEventIsPlaying(true);
             StartInstantTextEvent();
         }
     }
@@ -103,15 +117,76 @@ public class DoggoViewEventHandler : SceneEventHandler
         DoggoTouchDragScript.SetDraggable(true);
 
         //Let the game manager know the event is over
-        GM.SetEventIsPlaying(GetType(), false);
+        GM.SetEventIsPlaying(false);
 
         //Complete the event, then save the game
         if(ActiveGameEvent != null)
         {
+            StatsKeeper.UpdateStats(ActiveGameEvent);
             ActiveGameEvent.CompleteEvent();
             GM.SaveEvent(ActiveGameEvent);
             ActiveGameEvent = null;
         }
+    }
+
+    public void ChooseAndPlayRandomLoveEvent()
+    {
+        if(StatsKeeper.Energy >= 10)
+        {
+            LoveEventChooser.ChooseRandomEvent();
+            RequestEventStart(LoveEventChooser.GetChosenGameEvent());
+        }
+        else
+        {
+            TextGenerator.GenerateFloatingText("too tired", FloatingTextGenerator.FloatingTextUse.BoopDoggo, DoggoTouchDragScript.gameObject.transform);
+        }
+    }
+
+    public void FeedDoggo()
+    {
+        //TODO: check if the dog has been fed in the past few hours
+        if(StatsKeeper.Hunger <= 50)
+        {
+            UI_Functions.HideGameUI();
+            CreatedFeederScript = Instantiate(FoodObject, Vector3.zero, Quaternion.identity).GetComponent<FeedAnimation>();
+            CreatedFeederScript.BeginAnimation();
+        }
+        else if(StatsKeeper.Hunger > 50)
+        {
+            TextGenerator.GenerateFloatingText("I'm still full", FloatingTextGenerator.FloatingTextUse.BoopDoggo, DoggoTouchDragScript.gameObject.transform);
+        }
+    }
+
+    void UpdateFeeding()
+    {
+        if (CreatedFeederScript != null)
+        {
+            if (wasEating && CreatedFeederScript.isEating == false)
+            {
+                Destroy(CreatedFeederScript.gameObject);
+                CreatedFeederScript = null;
+
+                //Update the local stats keeper
+                StatsKeeper.DoggoHasBeenFed();
+
+                //Create text for pip-pup to say
+                TextGenerator.GenerateFloatingText("burp", FloatingTextGenerator.FloatingTextUse.BoopDoggo, DoggoTouchDragScript.gameObject.transform);
+
+                //Start the stats update animation
+
+                //Reveal the UI
+                UI_Functions.RevealGameUI();
+            }
+
+            //We check if CreatedFeederScript is null here, since the above code block can destroy it
+            if (CreatedFeederScript != null)
+            {
+                wasEating = CreatedFeederScript.isEating;
+            }
+            else
+                wasEating = false;
+        }
+
     }
 
     void SwitchSpecificUIButtons(string[] a_ButtonsToReveal, string[] a_ButtonsToHide)

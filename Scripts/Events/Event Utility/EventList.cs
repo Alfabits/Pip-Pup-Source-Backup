@@ -146,6 +146,9 @@ public class EventList : MonoBehaviour
 
     bool CheckIfEventMatchesCategory(GameEvent a_Event)
     {
+        if (a_Event.CheckIfLoveEvent())
+            return false;
+
         switch (HoldsEventsOfType)
         {
             case EventsHeld.OneTime:
@@ -192,7 +195,7 @@ public class EventList : MonoBehaviour
 
     public bool ContainsGameEvents()
     {
-        if(GameEventCollection.Count > 0 && ButtonsList.Count > 0)
+        if(ButtonsList.Count > 0)
         {
             return true;
         }

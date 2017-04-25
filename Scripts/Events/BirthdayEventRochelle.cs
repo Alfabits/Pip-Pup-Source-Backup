@@ -9,10 +9,14 @@ public class BirthdayEventRochelle : GameEvent {
         unlocked = false;
         autostart = false;
         usedelay = false;
-        onetimerun = true;
+        regular_events = true;
         eventname = "A Surprise";
 
         EventsToBeUnlockedAfterCompletion = new List<string>();
+
+        LoveGiven = 50;
+        EnergyRequired = 0;
+        LevelRequired = 0;
 
         TextEventScript = new List<string>();
         SetPriorityNumber();

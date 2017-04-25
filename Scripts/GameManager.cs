@@ -225,11 +225,8 @@ public class GameManager : MonoBehaviour
     /// </summary>
     /// <param name="a_Type"></param>
     /// <param name="a_Status"></param>
-    public void SetEventIsPlaying(Type a_Type, bool a_Status)
+    public void SetEventIsPlaying(bool a_Status)
     {
-        if (a_Type.IsSubclassOf(typeof(SceneEventHandler)))
-        {
-            eventIsPlaying = a_Status;
-        }
+        eventIsPlaying = a_Status;
     }
 }

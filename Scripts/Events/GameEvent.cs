@@ -13,24 +13,34 @@ public abstract class GameEvent : IComparable<GameEvent>
 
     }
 
+    //Status of the current event
     protected bool unlocked = false;
     protected bool completed = false;
-    protected bool onetimerun = false;
+    protected bool regular_events = false;
+    protected bool love_event = false;
     protected bool autostart = false;
     protected bool usedelay = false;
     protected int dailycompleted = 0;
     protected int priorityNumber = -1;
     protected float delay = 3.0f;
     protected string eventname = "nameless";
+
+    //Info for the event regarding the game's stats
+    protected int LoveGiven = 0;
+    protected int EnergyRequired = 0;
+    protected int LevelRequired = 0;
+
+    //Members regarding the event manager
     public List<string> EventsToBeUnlockedAfterCompletion;
     protected List<string> TextEventScript;
     protected EventManager EM;
 
-    public abstract void StartEvent();
+    //The class' methods
     public abstract List<string> GetTextEventScript();
     protected abstract void CreateTextEventScript();
     protected abstract void SetPriorityNumber();
     protected abstract void UnlockNextEvents();
+    public abstract void StartEvent();
 
     public void CompleteEvent()
     {
@@ -61,7 +71,7 @@ public abstract class GameEvent : IComparable<GameEvent>
     /// <returns></returns>
     public int CheckForDailyCompletion()
     {
-        if (!onetimerun)
+        if (!regular_events)
         {
             return dailycompleted;
         }
@@ -79,9 +89,14 @@ public abstract class GameEvent : IComparable<GameEvent>
         unlocked = a_Arg;
     }
 
+    public bool CheckIfLoveEvent()
+    {
+        return love_event;
+    }
+
     public bool DoesEventRunOnlyOnce()
     {
-        return onetimerun;
+        return regular_events;
     }
 
     public bool DoesEventStartAutomatically()
@@ -107,6 +122,21 @@ public abstract class GameEvent : IComparable<GameEvent>
     public string GetEventName()
     {
         return eventname;
+    }
+
+    public int GetLoveGiven()
+    {
+        return LoveGiven;
+    }
+
+    public int GetEnergyRequired()
+    {
+        return EnergyRequired;
+    }
+
+    public int GetLevelRequired()
+    {
+        return LevelRequired;
     }
 
     /// <summary>

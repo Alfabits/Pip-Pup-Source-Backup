@@ -39,6 +39,7 @@ public class LoadingManager : MonoBehaviour {
         LoadingBar,
         BoundaryCreationAndManagement,
         EventManager,
+        TouchAndScroll,
         NumberOfTypes
     };
 
